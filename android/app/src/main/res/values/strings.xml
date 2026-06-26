@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AisyahDekorasi</string>
+    <string name="title_activity_main">AisyahDekorasi</string>
+    <string name="package_name">com.aisyah.dekorasi</string>
+    <string name="custom_url_scheme">com.aisyah.dekorasi</string>
+</resources>

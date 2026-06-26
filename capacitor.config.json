@@ -1,0 +1,13 @@
+{
+  "appId": "com.aisyah.dekorasi",
+  "appName": "AisyahDekorasi",
+  "webDir": "public",
+  "server": {
+    "url": "http://192.168.1.16:8000",
+    "cleartext": true,
+    "allowNavigation": [
+      "192.168.1.16"
+    ]
+  },
+  "bundledWebRuntime": false
+}

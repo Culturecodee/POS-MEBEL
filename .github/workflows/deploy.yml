@@ -1,0 +1,103 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy main branch
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: mbstring, dom, fileinfo, mysql
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+
+            cd "${{ secrets.SERVER_PATH }}"
+
+            echo "=== START DEPLOY ==="
+
+            git config --global --add safe.directory "${{ secrets.SERVER_PATH }}"
+
+            echo "=== MAINTENANCE MODE ==="
+            php artisan down || true
+            trap 'php artisan up' EXIT
+
+            echo "=== RESTORE ==="
+            git restore public/build || true
+            git restore .github/workflows/deploy.yml || true
+            git restore storage/app/.gitignore || true
+            git restore storage/app/public/.gitignore || true
+
+            echo "=== GIT PULL ==="
+            git pull origin main
+
+            echo "=== COMPOSER INSTALL ==="
+            composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+            echo "=== NPM INSTALL ==="
+            npm ci
+
+            echo "=== REMOVE HOT ==="
+            rm -f public/hot
+
+            echo "=== NPM BUILD ==="
+            npm run build
+
+            echo "=== MIGRATE ==="
+            php artisan migrate --force
+
+            echo "=== STORAGE LINK ==="
+            rm -rf public/storage
+            php artisan storage:link
+
+            echo "=== PERMISSION ==="
+            chown -R www-data:www-data storage bootstrap/cache public/build
+            chmod -R 775 storage bootstrap/cache
+
+            echo "=== CACHE ==="
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            echo "=== DONE ==="
