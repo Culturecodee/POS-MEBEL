@@ -3,10 +3,10 @@
   "appName": "AisyahDekorasi",
   "webDir": "public",
   "server": {
-    "url": "http://192.168.1.16:8000",
-    "cleartext": true,
+    "url": "https://aisyahdekorasijepara.my.id",
+    "cleartext": false,
     "allowNavigation": [
-      "192.168.1.16"
+      "aisyahdekorasijepara.my.id"
     ]
   },
   "bundledWebRuntime": false
