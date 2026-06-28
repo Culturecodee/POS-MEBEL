@@ -29,6 +29,22 @@ export default function Create() {
         });
     };
 
+    // Hanya izinkan digit (0-9) saat mengetik
+    const handlePhoneKeyDown = (e) => {
+        const allowedKeys = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Tab", "Home", "End"];
+        if (!allowedKeys.includes(e.key) && !/^[0-9]$/.test(e.key)) {
+            e.preventDefault();
+        }
+    };
+
+    // Saat paste, ambil hanya karakter angka dari clipboard
+    const handlePhonePaste = (e) => {
+        e.preventDefault();
+        const pasted = e.clipboardData.getData("text");
+        const digitsOnly = pasted.replace(/\D/g, "");
+        setData("no_telp", (data.no_telp + digitsOnly).slice(0, 15));
+    };
+
     return (
         <>
             <Head title="Tambah Pelanggan" />
@@ -68,9 +84,13 @@ export default function Create() {
                                         label="No. Handphone"
                                         placeholder="08xxxxxxxxxx"
                                         errors={errors.no_telp}
+                                        inputMode="numeric"
+                                        maxLength={15}
                                         onChange={(e) =>
-                                            setData("no_telp", e.target.value)
+                                            setData("no_telp", e.target.value.replace(/\D/g, ""))
                                         }
+                                        onKeyDown={handlePhoneKeyDown}
+                                        onPaste={handlePhonePaste}
                                         value={data.no_telp}
                                     />
                                 </div>
