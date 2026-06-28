@@ -536,8 +536,41 @@ export default function Print({ transaction }) {
                                                         </thead>
                                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                                             {transaction.details.map((detail, idx) => {
-                                                                const sisaStok = (detail.product?.stock ?? 0) - detail.qty;
-                                                                const isStockValid = sisaStok >= 0;
+                                                                const stokAwal = detail.product?.stock ?? 0;
+                                                                const sisaStok = stokAwal - detail.qty;
+
+                                                                // 4-state stock badge logic
+                                                                let stockBadge;
+                                                                if (sisaStok < 0) {
+                                                                    stockBadge = (
+                                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30">
+                                                                            <span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                                                                            Stok Kurang
+                                                                        </span>
+                                                                    );
+                                                                } else if (sisaStok === 0) {
+                                                                    stockBadge = (
+                                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                                                            <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+                                                                            Habis
+                                                                        </span>
+                                                                    );
+                                                                } else if (sisaStok <= 5) {
+                                                                    stockBadge = (
+                                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30">
+                                                                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                                                            Terbatas
+                                                                        </span>
+                                                                    );
+                                                                } else {
+                                                                    stockBadge = (
+                                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30">
+                                                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                                                            Aman
+                                                                        </span>
+                                                                    );
+                                                                }
+
                                                                 return (
                                                                     <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
                                                                         <td className="p-3">
@@ -549,7 +582,7 @@ export default function Print({ transaction }) {
                                                                             </div>
                                                                         </td>
                                                                         <td className="p-3 text-center font-mono text-slate-600 dark:text-slate-400">
-                                                                            {detail.product?.stock ?? 0}
+                                                                            {stokAwal}
                                                                         </td>
                                                                         <td className="p-3 text-center font-mono font-bold text-amber-600">
                                                                             -{detail.qty}
@@ -558,15 +591,7 @@ export default function Print({ transaction }) {
                                                                             {sisaStok}
                                                                         </td>
                                                                         <td className="p-3 text-center">
-                                                                            {isStockValid ? (
-                                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30">
-                                                                                    Stok Aman
-                                                                                </span>
-                                                                            ) : (
-                                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30">
-                                                                                    Stok Kurang
-                                                                                </span>
-                                                                            )}
+                                                                            {stockBadge}
                                                                         </td>
                                                                     </tr>
                                                                 );

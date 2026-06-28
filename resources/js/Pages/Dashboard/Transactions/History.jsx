@@ -13,6 +13,7 @@ import {
     IconPrinter,
     IconFilter,
     IconX,
+    IconCircleCheck,
 } from "@tabler/icons-react";
 
 const defaultFilters = {
@@ -34,6 +35,7 @@ const History = ({ transactions, filters }) => {
         ...filters,
     });
     const [showFilters, setShowFilters] = useState(false);
+    const [confirmModal, setConfirmModal] = useState(null); // stores transaction object to confirm
 
     useEffect(() => {
         setFilterData({
@@ -326,16 +328,11 @@ const History = ({ transactions, filters }) => {
                                                 <div className="flex items-center justify-center gap-2">
                                                     {transaction.status === "pending" && (
                                                         <button
-                                                            onClick={() => {
-                                                                if (confirm("Apakah Anda yakin ingin memvalidasi transaksi ini dan memotong stok barang secara resmi?")) {
-                                                                    router.post(route("transactions.validate", transaction.id), {}, {
-                                                                        preserveScroll: true,
-                                                                    });
-                                                                }
-                                                            }}
-                                                            className="inline-flex items-center px-2.5 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors"
+                                                            onClick={() => setConfirmModal(transaction)}
+                                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors"
                                                             title="Validasi Transaksi"
                                                         >
+                                                            <IconCircleCheck size={13} />
                                                             Validasi
                                                         </button>
                                                     )}
@@ -380,6 +377,73 @@ const History = ({ transactions, filters }) => {
 
                 {links.length > 3 && <Pagination links={links} />}
             </div>
+
+        {/* Validation Confirmation Modal */}
+        {confirmModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden flex flex-col p-6 text-center">
+
+                    {/* Icon */}
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30 mb-4">
+                        <IconCircleCheck size={28} />
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">
+                        Validasi Transaksi
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                        Tindakan ini akan memotong stok barang secara resmi di database.
+                    </p>
+
+                    {/* Transaction Summary */}
+                    <div className="bg-slate-50 dark:bg-slate-950/20 rounded-2xl p-3.5 border border-slate-100 dark:border-slate-800 text-left text-xs mb-5 space-y-1.5">
+                        <div className="flex justify-between">
+                            <span className="text-slate-400">Invoice</span>
+                            <span className="font-bold text-slate-700 dark:text-slate-300 font-mono">{confirmModal.invoice}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-400">Pelanggan</span>
+                            <span className="font-medium text-slate-700 dark:text-slate-300">{confirmModal.customer?.name || "-"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-400">Total</span>
+                            <span className="font-bold text-[#8a5a3c]">
+                                {formatCurrency(confirmModal.grand_total ?? confirmModal.total_price)}
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-400">Item</span>
+                            <span className="font-medium text-slate-700 dark:text-slate-300">{confirmModal.total_items ?? confirmModal.details?.length ?? "-"} produk</span>
+                        </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setConfirmModal(null)}
+                            className="flex-1 py-2.5 px-4 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl transition-colors text-sm"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                router.post(route("transactions.validate", confirmModal.id), {}, {
+                                    preserveScroll: true,
+                                    onFinish: () => setConfirmModal(null),
+                                });
+                            }}
+                            className="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-colors text-sm flex items-center justify-center gap-1.5"
+                        >
+                            <IconCircleCheck size={16} />
+                            Ya, Validasi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         </>
     );
 };
