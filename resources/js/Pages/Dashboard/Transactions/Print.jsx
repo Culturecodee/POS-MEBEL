@@ -8,6 +8,9 @@ import {
     IconExternalLink,
     IconReceipt,
     IconFileInvoice,
+    IconCircleCheck,
+    IconInfoCircle,
+    IconX,
 } from "@tabler/icons-react";
 import ThermalReceipt, {
     ThermalReceipt58mm,
@@ -18,6 +21,8 @@ import { paymentMethodLabels } from "@/Utils/paymentMethods";
 export default function Print({ transaction }) {
     const { errors, flash } = usePage().props;
     const [printMode, setPrintMode] = useState("invoice"); // 'invoice' | 'thermal80' | 'thermal58'
+    const [showDebugModal, setShowDebugModal] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     useEffect(() => {
         if (flash?.success) {
@@ -122,11 +127,10 @@ export default function Print({ transaction }) {
                             <div className="flex bg-slate-200 dark:bg-slate-800 rounded-xl p-1">
                                 <button
                                     onClick={() => setPrintMode("invoice")}
-                                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                                        printMode === "invoice"
+                                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${printMode === "invoice"
                                             ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow"
                                             : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
-                                    }`}
+                                        }`}
                                 >
                                     <IconFileInvoice
                                         size={16}
@@ -136,11 +140,10 @@ export default function Print({ transaction }) {
                                 </button>
                                 <button
                                     onClick={() => setPrintMode("thermal80")}
-                                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                                        printMode === "thermal80"
+                                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${printMode === "thermal80"
                                             ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow"
                                             : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
-                                    }`}
+                                        }`}
                                 >
                                     <IconReceipt
                                         size={16}
@@ -150,11 +153,10 @@ export default function Print({ transaction }) {
                                 </button>
                                 <button
                                     onClick={() => setPrintMode("thermal58")}
-                                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                                        printMode === "thermal58"
+                                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${printMode === "thermal58"
                                             ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow"
                                             : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
-                                    }`}
+                                        }`}
                                 >
                                     <IconReceipt
                                         size={16}
@@ -205,15 +207,10 @@ export default function Print({ transaction }) {
                                 </p>
                             </div>
                             <button
-                                onClick={() => {
-                                    if (confirm("Apakah Anda yakin ingin memvalidasi transaksi ini dan memotong stok barang secara resmi?")) {
-                                        router.post(route("transactions.validate", transaction.id), {}, {
-                                            preserveScroll: true,
-                                        });
-                                    }
-                                }}
-                                className="w-full md:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-colors whitespace-nowrap"
+                                onClick={() => setShowConfirmModal(true)}
+                                className="w-full md:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-colors whitespace-nowrap flex items-center justify-center gap-2"
                             >
+                                <IconCircleCheck size={18} />
                                 Selesaikan Transaksi
                             </button>
                         </div>
@@ -244,25 +241,25 @@ export default function Print({ transaction }) {
                     {/* Thermal Receipt Preview */}
                     {(printMode === "thermal80" ||
                         printMode === "thermal58") && (
-                        <div className="flex justify-center print:block">
-                            <div className="bg-white rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl p-4 print:shadow-none print:border-0 print:p-0 print:rounded-none">
-                                {printMode === "thermal80" ? (
-                                    <ThermalReceipt
-                                        transaction={transaction}
-                                        storeName="Aisyah Dekorasi"
-                                        storeAddress="Jl. RA Kardinah"
-                                        storePhone="0895403630602"
-                                    />
-                                ) : (
-                                    <ThermalReceipt58mm
-                                        transaction={transaction}
-                                        storeName="Aisyah Dekorasi"
-                                        storePhone="0895403630602"
-                                    />
-                                )}
+                            <div className="flex justify-center print:block">
+                                <div className="bg-white rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl p-4 print:shadow-none print:border-0 print:p-0 print:rounded-none">
+                                    {printMode === "thermal80" ? (
+                                        <ThermalReceipt
+                                            transaction={transaction}
+                                            storeName="Aisyah Dekorasi"
+                                            storeAddress="Jl. RA Kardinah"
+                                            storePhone="0895403630602"
+                                        />
+                                    ) : (
+                                        <ThermalReceipt58mm
+                                            transaction={transaction}
+                                            storeName="Aisyah Dekorasi"
+                                            storePhone="0895403630602"
+                                        />
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
                     {/* Invoice View */}
                     {printMode === "invoice" && (
@@ -399,7 +396,7 @@ export default function Print({ transaction }) {
                                         <span>
                                             {formatPrice(
                                                 transaction.grand_total +
-                                                    (transaction.discount || 0)
+                                                (transaction.discount || 0)
                                             )}
                                         </span>
                                     </div>
@@ -451,20 +448,218 @@ export default function Print({ transaction }) {
                             </div>
 
                             {transaction.status === "pending" && (
-                                <div className="px-6 py-5 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex justify-center print:hidden">
+                                <div className="px-6 py-5 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-center gap-3 print:hidden">
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            if (confirm("Apakah Anda yakin ingin memvalidasi transaksi ini dan memotong stok barang secara resmi?")) {
-                                                router.post(route("transactions.validate", transaction.id), {}, {
-                                                    preserveScroll: true,
-                                                });
-                                            }
-                                        }}
-                                        className="w-full max-w-md py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-colors text-center animate-pulse"
+                                        onClick={() => setShowConfirmModal(true)}
+                                        className="w-full sm:w-auto px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 animate-pulse"
                                     >
-                                        Selesaikan Transaksi (Validasi & Potong Stok)
+                                        <IconCircleCheck size={20} />
+                                        <span>Selesaikan Transaksi</span>
                                     </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDebugModal(true)}
+                                        className="w-full sm:w-auto px-5 py-3.5 bg-slate-200 hover:bg-slate-350 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <IconInfoCircle size={20} />
+                                        <span>Detail Validasi</span>
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Developer Debug Modal */}
+                            {showDebugModal && (
+                                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
+                                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-[fadeIn_0.2s_ease-out]">
+                                        
+                                        {/* Modal Header */}
+                                        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-955/20">
+                                            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100">
+                                                <IconInfoCircle className="text-amber-500" size={22} />
+                                                <h3 className="font-bold text-base">Rincian Validasi & Logika Development</h3>
+                                            </div>
+                                            <button 
+                                                onClick={() => setShowDebugModal(false)}
+                                                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
+                                            >
+                                                <IconX size={20} />
+                                            </button>
+                                        </div>
+
+                                        {/* Modal Content */}
+                                        <div className="p-6 overflow-y-auto space-y-6 text-sm">
+                                            
+                                            {/* Request Details Section */}
+                                            <div className="space-y-3 text-left">
+                                                <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                                    Informasi API Request
+                                                </h4>
+                                                <div className="bg-slate-50 dark:bg-slate-950/20 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 space-y-2 font-mono text-xs">
+                                                    <div className="grid grid-cols-4 gap-1">
+                                                        <span className="text-slate-400">Endpoint:</span>
+                                                        <span className="col-span-3 break-all select-all font-bold text-slate-700 dark:text-slate-300">
+                                                            {route("transactions.validate", transaction.id)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="grid grid-cols-4 gap-1">
+                                                        <span className="text-slate-400">Method:</span>
+                                                        <span className="col-span-3 font-bold text-emerald-600 dark:text-emerald-400">POST</span>
+                                                    </div>
+                                                    <div className="grid grid-cols-4 gap-1">
+                                                        <span className="text-slate-400">Headers:</span>
+                                                        <span className="col-span-3 text-slate-500">
+                                                            {"{ Accept: 'application/json', X-CSRF-TOKEN: '...' }"}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Stock Deduction Audit */}
+                                            <div className="space-y-3 text-left">
+                                                <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                                    Audit Perubahan Stok Barang
+                                                </h4>
+                                                <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                                                    <table className="w-full text-left border-collapse text-xs">
+                                                        <thead>
+                                                            <tr className="bg-slate-50 dark:bg-slate-950/20 border-b border-slate-100 dark:border-slate-800 text-slate-500 font-medium">
+                                                                <th className="p-3">Produk</th>
+                                                                <th className="p-3 text-center">Stok Awal</th>
+                                                                <th className="p-3 text-center">Qty Jual</th>
+                                                                <th className="p-3 text-center">Stok Akhir</th>
+                                                                <th className="p-3 text-center">Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                            {transaction.details.map((detail, idx) => {
+                                                                const sisaStok = (detail.product?.stock ?? 0) - detail.qty;
+                                                                const isStockValid = sisaStok >= 0;
+                                                                return (
+                                                                    <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
+                                                                        <td className="p-3">
+                                                                            <div className="font-medium text-slate-800 dark:text-slate-200">
+                                                                                {detail.product?.title || "Produk Tidak Ditemukan"}
+                                                                            </div>
+                                                                            <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                                                                ID: {detail.product?.id || detail.product_id} | Barcode: {detail.product?.barcode || "-"}
+                                                                            </div>
+                                                                        </td>
+                                                                        <td className="p-3 text-center font-mono text-slate-600 dark:text-slate-400">
+                                                                            {detail.product?.stock ?? 0}
+                                                                        </td>
+                                                                        <td className="p-3 text-center font-mono font-bold text-amber-600">
+                                                                            -{detail.qty}
+                                                                        </td>
+                                                                        <td className="p-3 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
+                                                                            {sisaStok}
+                                                                        </td>
+                                                                        <td className="p-3 text-center">
+                                                                            {isStockValid ? (
+                                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30">
+                                                                                    Stok Aman
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30">
+                                                                                    Stok Kurang
+                                                                                </span>
+                                                                            )}
+                                                                        </td>
+                                                                    </tr>
+                                                                );
+                                                            })}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+
+                                            {/* Raw Transaction Object Section */}
+                                            <div className="space-y-3 text-left">
+                                                <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                                    Raw JSON Data (Model Transaksi)
+                                                </h4>
+                                                <pre className="bg-slate-950 text-emerald-400 p-4 rounded-2xl overflow-auto max-h-48 text-[11px] font-mono select-all">
+                                                    {JSON.stringify(transaction, null, 2)}
+                                                </pre>
+                                            </div>
+                                        </div>
+
+                                        {/* Modal Footer */}
+                                        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/20 flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowDebugModal(false)}
+                                                className="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+                                            >
+                                                Tutup
+                                            </button>
+                                        </div>
+                                    </div>
+                                    </div>
+                            )}
+
+                            {/* Confirmation Modal */}
+                            {showConfirmModal && (
+                                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
+                                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col p-6 animate-[fadeIn_0.2s_ease-out] text-center">
+                                        
+                                        {/* Header Warning Icon */}
+                                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30 mb-4">
+                                            <IconCircleCheck size={28} />
+                                        </div>
+
+                                        {/* Title & Description */}
+                                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">
+                                            Selesaikan Transaksi & Potong Stok
+                                        </h3>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
+                                            Apakah Anda yakin ingin memvalidasi transaksi ini dan memotong stok barang secara resmi di database?
+                                        </p>
+
+                                        {/* Items Preview */}
+                                        <div className="bg-slate-50 dark:bg-slate-950/20 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 text-left text-xs mb-6 max-h-32 overflow-y-auto space-y-2">
+                                            <div className="font-semibold text-slate-400 uppercase tracking-wider text-[10px] mb-1">
+                                                Rincian Pemotongan Stok:
+                                            </div>
+                                            {transaction.details.map((detail, idx) => (
+                                                <div key={idx} className="flex justify-between items-center gap-4">
+                                                    <span className="font-medium text-slate-700 dark:text-slate-350 truncate flex-1">
+                                                        {detail.product?.title || "Produk"}
+                                                    </span>
+                                                    <span className="font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap font-mono">
+                                                        -{detail.qty} Pcs
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="flex gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmModal(false)}
+                                                className="flex-1 py-3 px-4 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl transition-colors text-sm"
+                                            >
+                                                Batal
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setShowConfirmModal(false);
+                                                    router.post(route("transactions.validate", transaction.id), {}, {
+                                                        preserveScroll: true,
+                                                    });
+                                                }}
+                                                className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-colors text-sm"
+                                            >
+                                                Ya, Selesaikan
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
