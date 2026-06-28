@@ -87,7 +87,8 @@ function CartItem({ item, onUpdateQty, onRemove, isRemoving }) {
                     </span>
                     <button
                         onClick={() => onUpdateQty(item.id, item.qty + 1)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                        disabled={item.qty >= (item.product?.stock ?? 0)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         <IconPlus size={14} />
                     </button>

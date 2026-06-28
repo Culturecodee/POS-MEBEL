@@ -113,7 +113,11 @@ export function ProductImage({
         full: "w-full aspect-square",
     };
 
-    const src = image ? `/storage/products/${image}` : null;
+    const src = image
+        ? (image.startsWith("/storage/products/") || image.startsWith("http://") || image.startsWith("https://") || image.startsWith("/storage/"))
+            ? image
+            : `/storage/products/${image}`
+        : null;
 
     return (
         <LazyImage
@@ -136,7 +140,11 @@ export function ProductImage({
  * CategoryImage - Specialized lazy image for categories
  */
 export function CategoryImage({ image, name = "Category", className = "" }) {
-    const src = image ? `/storage/categories/${image}` : null;
+    const src = image
+        ? (image.startsWith("/storage/category/") || image.startsWith("http://") || image.startsWith("https://") || image.startsWith("/storage/"))
+            ? image
+            : `/storage/category/${image}`
+        : null;
 
     return (
         <LazyImage

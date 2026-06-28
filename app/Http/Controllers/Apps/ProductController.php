@@ -89,15 +89,15 @@ class ProductController extends Controller
             'title' => 'required',
             'description' => 'required',
             'category_id' => ['required', Rule::exists('categories', 'id')],
-            'raw_material_price' => 'nullable|numeric|min:0',
-            'upholstery_price' => 'nullable|numeric|min:0',
-            'cushion_price' => 'nullable|numeric|min:0',
-            'seat_pillow_price' => 'nullable|numeric|min:0',
-            'glass_price' => 'nullable|numeric|min:0',
-            'finishing_price' => 'nullable|numeric|min:0',
-            'packing_price' => 'nullable|numeric|min:0',
-            'buy_price' => 'nullable|numeric|min:0',
-            'sell_price' => 'required|numeric|min:0',
+            'raw_material_price' => 'nullable|integer|min:0',
+            'upholstery_price' => 'nullable|integer|min:0',
+            'cushion_price' => 'nullable|integer|min:0',
+            'seat_pillow_price' => 'nullable|integer|min:0',
+            'glass_price' => 'nullable|integer|min:0',
+            'finishing_price' => 'nullable|integer|min:0',
+            'packing_price' => 'nullable|integer|min:0',
+            'buy_price' => 'nullable|integer|min:1',
+            'sell_price' => 'required|integer|min:1',
             'stock' => 'required|integer|min:0',
         ]);
 
@@ -192,15 +192,15 @@ class ProductController extends Controller
             'title' => 'required',
             'description' => 'required',
             'category_id' => ['required', Rule::exists('categories', 'id')],
-            'raw_material_price' => 'nullable|numeric|min:0',
-            'upholstery_price' => 'nullable|numeric|min:0',
-            'cushion_price' => 'nullable|numeric|min:0',
-            'seat_pillow_price' => 'nullable|numeric|min:0',
-            'glass_price' => 'nullable|numeric|min:0',
-            'finishing_price' => 'nullable|numeric|min:0',
-            'packing_price' => 'nullable|numeric|min:0',
-            'buy_price' => 'nullable|numeric|min:0',
-            'sell_price' => 'required|numeric|min:0',
+            'raw_material_price' => 'nullable|integer|min:0',
+            'upholstery_price' => 'nullable|integer|min:0',
+            'cushion_price' => 'nullable|integer|min:0',
+            'seat_pillow_price' => 'nullable|integer|min:0',
+            'glass_price' => 'nullable|integer|min:0',
+            'finishing_price' => 'nullable|integer|min:0',
+            'packing_price' => 'nullable|integer|min:0',
+            'buy_price' => 'nullable|integer|min:1',
+            'sell_price' => 'required|integer|min:1',
             'stock' => 'required|integer|min:0',
         ]);
 
@@ -327,16 +327,10 @@ class ProductController extends Controller
         $finishingPrice = $this->normalizePrice($request->input('finishing_price'));
         $packingPrice = $this->normalizePrice($request->input('packing_price'));
 
-        $hasDetailedCosts = $request->filled('raw_material_price')
-            || $request->filled('upholstery_price')
-            || $request->filled('cushion_price')
-            || $request->filled('seat_pillow_price')
-            || $request->filled('glass_price')
-            || $request->filled('finishing_price')
-            || $request->filled('packing_price');
+        $totalComponents = $rawMaterialPrice + $upholsteryPrice + $cushionPrice + $seatPillowPrice + $glassPrice + $finishingPrice + $packingPrice;
 
-        $buyPrice = $hasDetailedCosts
-            ? ($rawMaterialPrice + $upholsteryPrice + $cushionPrice + $seatPillowPrice + $glassPrice + $finishingPrice + $packingPrice)
+        $buyPrice = $totalComponents > 0
+            ? $totalComponents
             : $this->normalizePrice($request->input('buy_price'));
 
         return [

@@ -1,144 +1,244 @@
-import { useEffect, useState } from "react";
-import { Head, Link, useForm } from "@inertiajs/react";
-import { IconEye, IconEyeOff, IconLoader2 } from "@tabler/icons-react";
+import { useState, useMemo } from "react";
+import { Head, Link } from "@inertiajs/react";
+import {
+    IconSearch,
+    IconPackage,
+    IconPhoto,
+    IconLogin,
+} from "@tabler/icons-react";
 
-export default function Login({ status, canResetPassword }) {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        email: "",
-        password: "",
-        remember: false,
-    });
+const formatCurrency = (value = 0) =>
+    new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0,
+    }).format(value);
 
-    const [showPassword, setShowPassword] = useState(false);
+export default function Welcome({ categories = [], products = [] }) {
+    const [search, setSearch] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState(null);
 
-    useEffect(() => {
-        return () => reset("password");
-    }, []);
-
-    const submit = (e) => {
-        e.preventDefault();
-        post(route("login"));
-    };
+    // Filtering products on client side
+    const filteredProducts = useMemo(() => {
+        return products.filter((product) => {
+            const matchesSearch = product.title.toLowerCase().includes(search.toLowerCase()) ||
+                (product.description && product.description.toLowerCase().includes(search.toLowerCase()));
+            const matchesCategory = selectedCategory ? product.category_id === selectedCategory : true;
+            return matchesSearch && matchesCategory;
+        });
+    }, [products, search, selectedCategory]);
 
     return (
         <>
-            <Head title="Login" />
+            <Head title="Katalog Galeri Mebel Jepara - Aisyah Dekorasi" />
 
-            <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#fcf7f0] px-3 py-6 sm:bg-[#f8f1e7] sm:px-4 sm:py-10">
-                <div className="absolute inset-0">
-                    <img
-                        src="/images/login-furniture.jpeg"
-                        alt="Background"
-                        className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,252,248,0.92),rgba(248,240,230,0.88),rgba(210,177,144,0.2))] backdrop-blur-[1.5px] sm:bg-[linear-gradient(135deg,rgba(248,241,231,0.84),rgba(239,227,210,0.72),rgba(169,125,94,0.38))] sm:backdrop-blur-[2px]" />
-                </div>
+            <div className="min-h-screen bg-[#fdfaf6] text-slate-800 font-sans selection:bg-[#c8aa8c]/30 selection:text-[#5d4333]">
+                {/* Header */}
+                <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#ebdccb]/60 transition-all duration-300">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+                        {/* Logo */}
+                        <div className="flex items-center gap-3">
+                            <img
+                                src="/images/aisyah-logo.jpg"
+                                alt="Aisyah Dekorasi Logo"
+                                className="h-12 w-12 rounded-xl object-cover shadow-md ring-2 ring-[#ebdccb]/50"
+                            />
+                            <div>
+                                <h1 className="text-lg font-bold tracking-tight text-[#5d4333]">
+                                    Aisyah Dekorasi
+                                </h1>
+                                <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#a07c60]">
+                                    Galeri Mebel Jepara
+                                </p>
+                            </div>
+                        </div>
 
-                <div className="absolute -left-24 top-0 h-64 w-64 rounded-full bg-[#f2e6d8]/80 blur-3xl sm:h-80 sm:w-80 sm:bg-[#ead9c7]/70" />
-                <div className="absolute -bottom-16 right-0 h-64 w-64 rounded-full bg-[#e8d3bc]/70 blur-3xl sm:h-80 sm:w-80 sm:bg-[#d9c1aa]/60" />
+                        {/* Auth Buttons - Login Only */}
+                        
+                    </div>
+                </header>
 
-                <div className="relative z-10 w-full max-w-sm rounded-[24px] border border-[#efe1d0] bg-[#fffdf9]/96 p-5 shadow-xl shadow-[#e7d6c4]/35 backdrop-blur-xl sm:max-w-md sm:rounded-[30px] sm:border-[#e8d9c9] sm:bg-[#fffaf6]/94 sm:p-8 sm:shadow-2xl sm:shadow-[#d9c3ac]/25 md:p-10">
-                    <div className="mb-6 text-center sm:mb-8">
-                        <img
-                            src="/images/aisyah-logo.jpg"
-                            alt="Aisyah Dekorasi"
-                            className="mx-auto h-14 w-14 rounded-2xl object-cover shadow-lg shadow-[#d9c3ac]/30 ring-1 ring-[#efe1d0] sm:h-16 sm:w-16 sm:ring-[#e7d8c8]"
-                        />
-                        <h1 className="mt-4 text-2xl font-bold text-[#5d4333] sm:mt-5 sm:text-3xl">
-                            Selamat Datang
-                        </h1>
-                        <p className="mt-2 text-xs font-medium tracking-[0.08em] text-[#8b705c] sm:text-sm sm:tracking-normal sm:text-[#7a5c45]">
-                            TOKO AISYAH DEKORASI JEPARA
-                        </p>
+                {/* Hero Section */}
+                <section className="relative overflow-hidden bg-gradient-to-br from-[#f6ecdd] via-[#fdfaf6] to-[#fff7eb] py-16 sm:py-24 border-b border-[#ebdccb]/40">
+                    <div className="absolute inset-0 z-0 opacity-10">
+                        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-[#7b563f] blur-3xl" />
+                        <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-[#c8aa8c] blur-3xl" />
                     </div>
 
-                    {status && (
-                        <div className="mb-6 rounded-xl bg-[#f4e7d8] p-4 text-center text-sm text-[#7a5c45]">
-                            {status}
+                    <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f4e7d5] text-xs font-semibold text-[#8b6b50] tracking-wider uppercase mb-6">
+                            Pameran Seni Kayu Jati Premium
+                        </span>
+                        <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#473022] max-w-3xl mx-auto leading-tight">
+                            Galeri Koleksi Mebel Jati Jepara
+                        </h2>
+                        <p className="mt-4 text-base sm:text-lg text-[#745e4f] max-w-2xl mx-auto font-medium">
+                            Menampilkan mahakarya mebel kayu jati solid hasil pahatan pengrajin profesional Jepara.
+                        </p>
+
+                        {/* Search Bar */}
+                        <div className="mt-10 max-w-md mx-auto">
+                            <div className="relative">
+                                <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                                    <IconSearch size={20} />
+                                </span>
+                                <input
+                                    type="text"
+                                    placeholder="Cari produk mebel di galeri..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-[#ebdccb] bg-white text-sm text-slate-800 shadow-sm transition-all focus:border-[#7b563f] focus:ring-4 focus:ring-[#7b563f]/10 outline-none"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Main Content */}
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    {/* Category Filter */}
+                    <div className="mb-10 text-center">
+                        <h3 className="text-xs uppercase tracking-[0.2em] font-bold text-[#a07c60] mb-4">
+                            Kategori Koleksi
+                        </h3>
+                        <div className="flex flex-wrap justify-center gap-2">
+                            <button
+                                onClick={() => setSelectedCategory(null)}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition duration-200 ${
+                                    selectedCategory === null
+                                        ? "bg-[#7b563f] text-white shadow-md shadow-[#7b563f]/20"
+                                        : "bg-white text-[#7b563f] border border-[#ebdccb] hover:bg-[#fff9f2]"
+                                }`}
+                            >
+                                Semua Koleksi
+                            </button>
+                            {categories.map((category) => (
+                                <button
+                                    key={category.id}
+                                    onClick={() => setSelectedCategory(category.id)}
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition duration-200 ${
+                                        selectedCategory === category.id
+                                            ? "bg-[#7b563f] text-white shadow-md shadow-[#7b563f]/20"
+                                            : "bg-white text-[#7b563f] border border-[#ebdccb] hover:bg-[#fff9f2]"
+                                    }`}
+                                >
+                                    {category.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Products Grid */}
+                    {filteredProducts.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {filteredProducts.map((product) => {
+                                const isLowStock = product.stock > 0 && product.stock <= 5;
+                                const isOutOfStock = product.stock === 0;
+
+                                return (
+                                    <div
+                                        key={product.id}
+                                        className="group flex flex-col rounded-3xl border border-[#ebdccb]/60 bg-white overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
+                                    >
+                                        {/* Image Area */}
+                                        <div className="relative aspect-square overflow-hidden bg-slate-100">
+                                            {product.image ? (
+                                                <img
+                                                    src={product.image}
+                                                    alt={product.title}
+                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = "/images/catalog-hero.jpeg";
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-[#fcf8f3]">
+                                                    <IconPhoto size={36} className="text-[#c8aa8c]" />
+                                                </div>
+                                            )}
+
+                                            <div className="absolute left-3 top-3 rounded-lg bg-[#7b563f] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.1em] text-white">
+                                                {product.category?.name || "Mebel"}
+                                            </div>
+
+                                            <div className="absolute right-3 top-3">
+                                                {isOutOfStock ? (
+                                                    <span className="rounded-full bg-red-500 px-2.5 py-1 text-[9px] font-bold text-white uppercase tracking-wider">
+                                                        Habis
+                                                    </span>
+                                                ) : isLowStock ? (
+                                                    <span className="rounded-full bg-amber-500 px-2.5 py-1 text-[9px] font-bold text-white uppercase tracking-wider">
+                                                        Stok Terbatas
+                                                    </span>
+                                                ) : (
+                                                    <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-[9px] font-bold text-white uppercase tracking-wider">
+                                                        Tersedia
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Info Area - Passive details only */}
+                                        <div className="flex-1 p-5 flex flex-col justify-between">
+                                            <div className="space-y-2">
+                                                <h4 className="text-base font-bold text-[#473022]">
+                                                    {product.title}
+                                                </h4>
+                                                <p className="text-xs text-slate-500 leading-relaxed min-h-[40px]">
+                                                    {product.description || "Furnitur jepara berkualitas premium buatan pengrajin lokal berpengalaman."}
+                                                </p>
+                                            </div>
+
+                                            <div className="mt-4 pt-4 border-t border-[#ebdccb]/40">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <span className="text-[9px] uppercase tracking-[0.1em] font-semibold text-slate-400 block">
+                                                            Estimasi Harga
+                                                        </span>
+                                                        <span className="text-base font-extrabold text-[#7b563f]">
+                                                            {formatCurrency(product.sell_price)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-[9px] uppercase tracking-[0.1em] font-semibold text-slate-400 block">
+                                                            Jumlah Stok
+                                                        </span>
+                                                        <span className="text-xs font-bold text-slate-700">
+                                                            {product.stock} unit
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="text-center py-20 border-2 border-dashed border-[#ebdccb]/60 rounded-3xl bg-white">
+                            <IconPackage size={48} className="mx-auto text-[#c8aa8c] mb-3" />
+                            <h4 className="text-lg font-bold text-[#5d4333]">
+                                Koleksi Tidak Ditemukan
+                            </h4>
+                            <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
+                                Coba ubah kata kunci pencarian Anda atau pilih kategori koleksi yang lain.
+                            </p>
                         </div>
                     )}
+                </main>
 
-                    <form onSubmit={submit} className="space-y-4 sm:space-y-6">
-                        <div className="relative">
-                            <input
-                                type="email"
-                                value={data.email}
-                                onChange={(e) => setData("email", e.target.value)}
-                                required
-                                placeholder=" "
-                                className="peer h-12 w-full rounded-xl border border-[#e5d7c8] bg-white/98 px-4 pb-2 pt-4 text-sm text-slate-800 shadow-sm outline-none transition-all duration-300 focus:border-[#c4a180] focus:bg-white focus:ring-4 focus:ring-[#dbc1a7]/20 sm:h-14 sm:border-[#decfbe] sm:pt-5 sm:text-base sm:focus:border-[#b89271] sm:focus:ring-[#c8aa8c]/20"
-                            />
-                            <label className="absolute left-4 top-2 text-[11px] text-[#745c4a] transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-[#9d836f] sm:text-xs sm:text-[#6b5343] sm:peer-placeholder-shown:top-4 sm:peer-placeholder-shown:text-[#8f735e]">
-                                Email
-                            </label>
-                            {errors.email && (
-                                <p className="mt-1 text-sm text-[#9b5c43]">
-                                    {errors.email}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="relative">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                value={data.password}
-                                onChange={(e) => setData("password", e.target.value)}
-                                required
-                                placeholder=" "
-                                className="peer h-12 w-full rounded-xl border border-[#e5d7c8] bg-white/98 px-4 pb-2 pt-4 text-sm text-slate-800 shadow-sm outline-none transition-all duration-300 focus:border-[#c4a180] focus:bg-white focus:ring-4 focus:ring-[#dbc1a7]/20 sm:h-14 sm:border-[#decfbe] sm:pt-5 sm:text-base sm:focus:border-[#b89271] sm:focus:ring-[#c8aa8c]/20"
-                            />
-                            <label className="absolute left-4 top-2 text-[11px] text-[#745c4a] transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-[#9d836f] sm:text-xs sm:text-[#6b5343] sm:peer-placeholder-shown:top-4 sm:peer-placeholder-shown:text-[#8f735e]">
-                                Password
-                            </label>
-
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8b705c] transition hover:text-[#b89271] sm:text-[#7a5c45]"
-                            >
-                                {showPassword ? (
-                                    <IconEyeOff size={20} />
-                                ) : (
-                                    <IconEye size={20} />
-                                )}
-                            </button>
-
-                            {errors.password && (
-                                <p className="mt-1 text-sm text-[#9b5c43]">
-                                    {errors.password}
-                                </p>
-                            )}
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#d2b190] to-[#b98d6d] text-sm font-semibold text-white shadow-lg shadow-[#e0c8b1]/35 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 sm:h-14 sm:text-base sm:from-[#c7a27f] sm:to-[#a97d5e] sm:shadow-[#d9c3ac]/25"
-                        >
-                            {processing ? (
-                                <>
-                                    <IconLoader2
-                                        size={20}
-                                        className="animate-spin"
-                                    />
-                                    Memproses...
-                                </>
-                            ) : (
-                                "Masuk Sekarang"
-                            )}
-                        </button>
-
-                        <p className="text-center text-xs font-medium text-[#7b6453] sm:text-sm sm:text-[#6b5343]">
-                            Belum punya akun?{" "}
-                            <Link
-                                href="/register"
-                                className="font-semibold text-[#9a7356] hover:text-[#7a5c45] hover:underline"
-                            >
-                                Daftar
-                            </Link>
+                {/* Footer */}
+                <footer className="bg-[#473022] text-[#e0cfbe] py-10 border-t border-[#352318]">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
+                        <p className="text-sm font-medium">
+                            &copy; {new Date().getFullYear()} Toko Aisyah Dekorasi Jepara. Semua Hak Dilindungi.
                         </p>
-                    </form>
-                </div>
+                        <p className="text-[11px] text-[#bcaaa4] max-w-md mx-auto">
+                            Menampilkan koleksi furniture jati premium. Transaksi pembelian hanya dilayani secara langsung/internal oleh petugas kasir di gerai kami.
+                        </p>
+                    </div>
+                </footer>
             </div>
         </>
     );

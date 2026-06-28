@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { usePage, Link } from "@inertiajs/react";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import { useTheme } from "@/Context/ThemeSwitcherContext";
 import {
     IconHome,
@@ -14,10 +14,25 @@ import {
 } from "@tabler/icons-react";
 
 export default function POSLayout({ children }) {
-    const { auth } = usePage().props;
+    const { auth, flash, errors } = usePage().props;
     const { darkMode, themeSwitcher } = useTheme();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+        if (errors && Object.keys(errors).length > 0) {
+            Object.values(errors).forEach((err) => {
+                toast.error(err);
+            });
+        }
+    }, [flash, errors]);
+
     const isCustomerView = Boolean(auth?.customer || auth?.regular);
     const dashboardRoute = isCustomerView
         ? `${route("products.index")}#home`

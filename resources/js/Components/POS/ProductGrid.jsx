@@ -70,20 +70,26 @@ function HeroPreviewCard({
     className = "",
     compact = false,
     onAddToCart,
+    cartQty = 0,
 }) {
     if (!product) return null;
+    const remainingStock = product.stock - cartQty;
+    const hasStock = remainingStock > 0;
 
     return (
         <button
             type="button"
-            onClick={() => product.stock > 0 && onAddToCart(product)}
-            className={`group relative overflow-hidden border border-white/35 bg-white/20 text-left backdrop-blur-sm transition-all hover:bg-white/25 ${className}`}
+            onClick={() => hasStock && onAddToCart(product)}
+            disabled={!hasStock}
+            className={`group relative overflow-hidden border border-white/35 bg-white/20 text-left backdrop-blur-sm transition-all ${className} ${
+                hasStock ? "hover:bg-white/25 hover:scale-[1.01] cursor-pointer" : "cursor-not-allowed opacity-50"
+            }`}
         >
             {product.image ? (
                 <img
                     src={getProductImageUrl(product.image)}
                     alt={product.title}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className={`h-full w-full object-cover transition-transform duration-500 ${hasStock ? "group-hover:scale-105" : ""}`}
                 />
             ) : (
                 <div className="flex h-full w-full items-center justify-center bg-white/10">
@@ -118,25 +124,26 @@ function HeroPreviewCard({
     );
 }
 
-function ProductCard({ product, onAddToCart, isAdding }) {
-    const hasStock = product.stock > 0;
+function ProductCard({ product, onAddToCart, isAdding, cartQty = 0 }) {
+    const remainingStock = product.stock - cartQty;
+    const hasStock = remainingStock > 0;
 
     return (
-        <div className="group overflow-hidden rounded-[26px] border border-[#eadbca] bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl">
+        <div className={`group overflow-hidden rounded-[26px] border border-[#eadbca] bg-white shadow-sm transition-all ${
+            hasStock ? "hover:-translate-y-1 hover:shadow-xl cursor-pointer" : "opacity-60 cursor-not-allowed"
+        }`}>
             <button
                 type="button"
                 onClick={() => hasStock && onAddToCart(product)}
                 disabled={!hasStock || isAdding}
-                className={`block w-full text-left ${
-                    !hasStock ? "cursor-not-allowed opacity-60" : ""
-                }`}
+                className="block w-full text-left"
             >
                 <div className="relative aspect-[4/5] overflow-hidden bg-[#f5ede3]">
                     {product.image ? (
                         <img
                             src={getProductImageUrl(product.image)}
                             alt={product.title}
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            className={`h-full w-full object-cover transition-transform duration-500 ${hasStock ? "group-hover:scale-105" : ""}`}
                             loading="lazy"
                         />
                     ) : (
@@ -154,7 +161,7 @@ function ProductCard({ product, onAddToCart, isAdding }) {
                     {!hasStock && (
                         <div className="absolute inset-0 flex items-center justify-center bg-[#93725c]/45">
                             <span className="rounded-full bg-[#fffaf3] px-4 py-2 text-xs font-semibold text-[#9d7e66]">
-                                Stok Habis
+                                {product.stock === 0 ? "Stok Habis" : "Batas Stok"}
                             </span>
                         </div>
                     )}
@@ -176,7 +183,7 @@ function ProductCard({ product, onAddToCart, isAdding }) {
                                 Stok
                             </p>
                             <p className="text-sm font-medium text-[#7d6756]">
-                                {product.stock}
+                                {product.stock} {cartQty > 0 && <span className="text-xs text-[#a17f68] font-bold">({cartQty})</span>}
                             </p>
                         </div>
                         <div className="inline-flex items-center gap-2 rounded-full border border-[#e5d6c8] px-4 py-2 text-xs font-semibold text-[#9d7e66] transition-all group-hover:border-[#c7ae97] group-hover:bg-[#c7ae97] group-hover:text-white">
@@ -208,7 +215,13 @@ export default function ProductGrid({
     onAddToCart,
     addingProductId,
     searchInputRef,
+    carts = [],
 }) {
+    const getCartQty = (productId) => {
+        if (!productId) return 0;
+        return carts.find((c) => c.product_id === productId)?.qty || 0;
+    };
+
     const filteredProducts = products.filter((product) => {
         const matchesCategory =
             !selectedCategory || product.category_id === selectedCategory;
@@ -263,11 +276,16 @@ export default function ProductGrid({
                             </p>
                             <button
                                 type="button"
-                                onClick={() =>
-                                    heroProducts[0] &&
-                                    onAddToCart(heroProducts[0])
-                                }
-                                className="inline-flex items-center gap-3 rounded-full bg-[#fffaf5] px-6 py-3 text-sm font-semibold text-[#9d7e66] transition hover:bg-[#f7efe6]"
+                                onClick={() => {
+                                    if (heroProducts[0]) {
+                                        const qty = getCartQty(heroProducts[0].id);
+                                        if (heroProducts[0].stock > qty) {
+                                            onAddToCart(heroProducts[0]);
+                                        }
+                                    }
+                                }}
+                                disabled={heroProducts[0] && heroProducts[0].stock <= getCartQty(heroProducts[0].id)}
+                                className="inline-flex items-center gap-3 rounded-full bg-[#fffaf5] px-6 py-3 text-sm font-semibold text-[#9d7e66] transition hover:bg-[#f7efe6] disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Pilih sekarang
                                 <IconArrowRight size={16} />
@@ -282,6 +300,7 @@ export default function ProductGrid({
                                 label="Baru"
                                 compact
                                 onAddToCart={onAddToCart}
+                                cartQty={getCartQty(heroProducts[0]?.id)}
                                 className="min-h-[170px] rounded-[20px]"
                             />
                             <HeroPreviewCard
@@ -289,6 +308,7 @@ export default function ProductGrid({
                                 label="Populer"
                                 compact
                                 onAddToCart={onAddToCart}
+                                cartQty={getCartQty(heroProducts[1]?.id)}
                                 className="min-h-[170px] rounded-[20px]"
                             />
                         </div>
@@ -296,6 +316,7 @@ export default function ProductGrid({
                             product={heroProducts[2] || heroProducts[0]}
                             label="Unggulan"
                             onAddToCart={onAddToCart}
+                            cartQty={getCartQty(heroProducts[2]?.id || heroProducts[0]?.id)}
                             className="min-h-[353px] rounded-[24px]"
                         />
                     </div>
@@ -340,6 +361,7 @@ export default function ProductGrid({
                                 product={product}
                                 onAddToCart={onAddToCart}
                                 isAdding={addingProductId === product.id}
+                                cartQty={getCartQty(product.id)}
                             />
                         ))}
                     </div>

@@ -232,7 +232,12 @@ const History = ({ transactions, filters }) => {
                                         <th className="px-4 py-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                             Profit
                                         </th>
-                                        <th className="px-4 py-4 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"></th>
+                                        <th className="px-4 py-4 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th className="px-4 py-4 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                            Aksi
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -301,16 +306,50 @@ const History = ({ transactions, filters }) => {
                                                 )}
                                             </td>
                                             <td className="px-4 py-4 text-center">
-                                                <Link
-                                                    href={route(
-                                                        "transactions.print",
-                                                        transaction.invoice
+                                                {transaction.status === "success" && (
+                                                    <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
+                                                        Sukses
+                                                    </span>
+                                                )}
+                                                {transaction.status === "pending" && (
+                                                    <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/30 dark:text-amber-400 animate-pulse">
+                                                        Pending
+                                                    </span>
+                                                )}
+                                                {transaction.status === "rejected" && (
+                                                    <span className="inline-flex rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-800 dark:bg-rose-950/30 dark:text-rose-400">
+                                                        Ditolak
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-4 text-center">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    {transaction.status === "pending" && (
+                                                        <button
+                                                            onClick={() => {
+                                                                if (confirm("Apakah Anda yakin ingin memvalidasi transaksi ini dan memotong stok barang secara resmi?")) {
+                                                                    router.post(route("transactions.validate", transaction.id), {}, {
+                                                                        preserveScroll: true,
+                                                                    });
+                                                                }
+                                                            }}
+                                                            className="inline-flex items-center px-2.5 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors"
+                                                            title="Validasi Transaksi"
+                                                        >
+                                                            Validasi
+                                                        </button>
                                                     )}
-                                                    className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-[#8a5a3c] hover:bg-[#f5ebdf] dark:hover:bg-[#5c3b2a]/30 transition-colors"
-                                                    title="Cetak Struk"
-                                                >
-                                                    <IconPrinter size={18} />
-                                                </Link>
+                                                    <Link
+                                                        href={route(
+                                                            "transactions.print",
+                                                            transaction.invoice
+                                                        )}
+                                                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-[#8a5a3c] hover:bg-[#f5ebdf] dark:hover:bg-[#5c3b2a]/30 transition-colors"
+                                                        title="Cetak Struk"
+                                                    >
+                                                        <IconPrinter size={18} />
+                                                    </Link>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

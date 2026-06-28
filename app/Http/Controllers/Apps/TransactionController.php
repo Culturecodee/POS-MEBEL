@@ -131,17 +131,23 @@ class TransactionController extends Controller
      */
     public function addToCart(Request $request)
     {
+        // Validate input quantity and product existence
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'qty'        => 'required|integer|min:1',
+        ]);
+
         // Cari produk berdasarkan ID yang diberikan
         $product = Product::whereId($request->product_id)->first();
 
         // Jika produk tidak ditemukan, redirect dengan pesan error
         if (! $product) {
-            return redirect()->back()->with('error', 'Product not found.');
+            return redirect()->back()->withErrors(['qty' => 'Mebel tidak ditemukan.']);
         }
 
-        // Cek stok produk
+        // Cek stok produk awal
         if ($product->stock < $request->qty) {
-            return redirect()->back()->with('error', 'Out of Stock Product!.');
+            return redirect()->back()->withErrors(['qty' => "Stok untuk mebel '{$product->title}' tidak mencukupi. Tersedia: {$product->stock}."]);
         }
 
         // Cek keranjang
@@ -151,12 +157,14 @@ class TransactionController extends Controller
             ->first();
 
         if ($cart) {
-            // Tingkatkan qty
-            $cart->increment('qty', $request->qty);
+            $newQty = $cart->qty + $request->qty;
+            if ($product->stock < $newQty) {
+                return redirect()->back()->withErrors(['qty' => "Kuantitas mebel '{$product->title}' di keranjang melebihi stok. Tersedia: {$product->stock}."]);
+            }
 
-            // Jumlahkan harga * kuantitas
+            // Tingkatkan qty secara lokal tanpa memicu increment double save
+            $cart->qty = $newQty;
             $cart->price = $cart->product->sell_price * $cart->qty;
-
             $cart->save();
         } else {
             // Insert ke keranjang
@@ -164,11 +172,11 @@ class TransactionController extends Controller
                 'cashier_id' => auth()->user()->id,
                 'product_id' => $request->product_id,
                 'qty'        => $request->qty,
-                'price'      => $request->sell_price * $request->qty,
+                'price'      => $product->sell_price * $request->qty,
             ]);
         }
 
-        return redirect()->route('transactions.index')->with('success', 'Product Added Successfully!.');
+        return redirect()->route('transactions.index')->with('success', 'Mebel berhasil ditambahkan ke keranjang.');
     }
 
     /**
@@ -209,18 +217,12 @@ class TransactionController extends Controller
             ->first();
 
         if (! $cart) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cart item not found',
-            ], 404);
+            return redirect()->back()->withErrors(['qty' => 'Item keranjang tidak ditemukan.']);
         }
 
         // Check stock availability
         if ($cart->product->stock < $request->qty) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Stok tidak mencukupi. Tersedia: ' . $cart->product->stock,
-            ], 422);
+            return redirect()->back()->withErrors(['qty' => 'Stok tidak mencukupi. Tersedia: ' . $cart->product->stock]);
         }
 
         // Update quantity and price
@@ -235,7 +237,7 @@ class TransactionController extends Controller
      * holdCart - Hold current cart items for later
      *
      * @param  Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function holdCart(Request $request)
     {
@@ -251,10 +253,7 @@ class TransactionController extends Controller
             ->get();
 
         if ($activeCarts->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Keranjang kosong, tidak ada yang bisa ditahan',
-            ], 422);
+            return redirect()->back()->withErrors(['checkout' => 'Keranjang kosong, tidak ada yang bisa ditahan']);
         }
 
         // Generate unique hold ID
@@ -277,7 +276,7 @@ class TransactionController extends Controller
      * resumeCart - Resume a held cart
      *
      * @param  string $holdId
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function resumeCart($holdId)
     {
@@ -289,10 +288,7 @@ class TransactionController extends Controller
             ->count();
 
         if ($activeCarts > 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Selesaikan atau tahan transaksi aktif terlebih dahulu',
-            ], 422);
+            return redirect()->back()->withErrors(['checkout' => 'Selesaikan atau tahan transaksi aktif terlebih dahulu']);
         }
 
         // Get held carts
@@ -301,10 +297,7 @@ class TransactionController extends Controller
             ->get();
 
         if ($heldCarts->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Transaksi ditahan tidak ditemukan',
-            ], 404);
+            return redirect()->back()->withErrors(['checkout' => 'Transaksi ditahan tidak ditemukan']);
         }
 
         // Resume by clearing hold info
@@ -323,7 +316,7 @@ class TransactionController extends Controller
      * clearHold - Delete a held cart
      *
      * @param  string $holdId
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function clearHold($holdId)
     {
@@ -334,16 +327,10 @@ class TransactionController extends Controller
             ->delete();
 
         if ($deleted === 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Transaksi ditahan tidak ditemukan',
-            ], 404);
+            return redirect()->back()->withErrors(['checkout' => 'Transaksi ditahan tidak ditemukan']);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Transaksi ditahan berhasil dihapus',
-        ]);
+        return back()->with('success', 'Transaksi ditahan berhasil dihapus');
     }
 
     /**
@@ -410,6 +397,41 @@ class TransactionController extends Controller
             }
         }
 
+        // Validate request
+        $request->validate([
+            'discount' => 'required|integer|min:0',
+        ]);
+
+        $paymentGateway = $request->input('payment_gateway');
+        $isCashPayment  = empty($paymentGateway);
+        $isManualPayment = in_array($paymentGateway, self::MANUAL_PAYMENT_METHODS, true);
+
+        // Fetch carts with products to calculate subtotal
+        $carts = Cart::with('product')->where('cashier_id', auth()->user()->id)->get();
+        if ($carts->isEmpty()) {
+            return redirect()->back()->with('error', 'Keranjang belanja kosong.');
+        }
+
+        // Subtotal calculation
+        $subtotal = 0;
+        foreach ($carts as $cart) {
+            $subtotal += $cart->product->sell_price * $cart->qty;
+        }
+
+        $discount = (int) $request->discount;
+        $grandTotal = max(0, $subtotal - $discount);
+
+        if ($isCashPayment) {
+            $request->validate([
+                'cash' => 'required|integer|min:' . $grandTotal,
+            ]);
+            $cashAmount = (int) $request->cash;
+            $changeAmount = $cashAmount - $grandTotal;
+        } else {
+            $cashAmount = $grandTotal;
+            $changeAmount = 0;
+        }
+
         $length = 10;
         $random = '';
         for ($i = 0; $i < $length; $i++) {
@@ -417,69 +439,80 @@ class TransactionController extends Controller
         }
 
         $invoice        = 'TRX-' . Str::upper($random);
-        $isCashPayment  = empty($paymentGateway);
         $isPaidDirectly = $isCashPayment || $isManualPayment;
-        $cashAmount     = $isCashPayment ? $request->cash : $request->grand_total;
-        $changeAmount   = $isPaidDirectly ? $request->change : 0;
         $isCustomerOrder = $authenticatedUser?->isCustomer() ?? false;
         $cashierId = $isCustomerOrder
             ? $this->resolveCompanyCashierId()
             : $authenticatedUser->id;
 
-        $transaction = DB::transaction(function () use (
-            $request,
-            $invoice,
-            $cashAmount,
-            $changeAmount,
-            $paymentGateway,
-            $isCashPayment,
-            $isPaidDirectly,
-            $cashierId,
-            $authenticatedUser,
-            $isCustomerOrder
-        ) {
-            $transaction = Transaction::create([
-                'cashier_id'     => $cashierId,
-                'customer_id'    => $request->customer_id,
-                'ordered_by_user_id' => $authenticatedUser->id,
-                'order_source'   => $isCustomerOrder ? 'customer' : 'cashier',
-                'invoice'        => $invoice,
-                'cash'           => $cashAmount,
-                'change'         => $changeAmount,
-                'discount'       => $request->discount,
-                'grand_total'    => $request->grand_total,
-                'payment_method' => $paymentGateway ?: 'cash',
-                'payment_status' => $isPaidDirectly ? 'paid' : 'pending',
-            ]);
-
-            $carts = Cart::where('cashier_id', auth()->user()->id)->get();
-
-            foreach ($carts as $cart) {
-                $transaction->details()->create([
-                    'transaction_id' => $transaction->id,
-                    'product_id'     => $cart->product_id,
-                    'qty'            => $cart->qty,
-                    'price'          => $cart->price,
+        try {
+            $transaction = DB::transaction(function () use (
+                $request,
+                $invoice,
+                $cashAmount,
+                $changeAmount,
+                $grandTotal,
+                $discount,
+                $paymentGateway,
+                $isPaidDirectly,
+                $cashierId,
+                $authenticatedUser,
+                $isCustomerOrder,
+                $carts
+            ) {
+                $transaction = Transaction::create([
+                    'cashier_id'     => $cashierId,
+                    'customer_id'    => $request->customer_id,
+                    'ordered_by_user_id' => $authenticatedUser->id,
+                    'order_source'   => $isCustomerOrder ? 'customer' : 'cashier',
+                    'invoice'        => $invoice,
+                    'cash'           => $cashAmount,
+                    'change'         => $changeAmount,
+                    'discount'       => $discount,
+                    'grand_total'    => $grandTotal,
+                    'payment_method' => $paymentGateway ?: 'cash',
+                    'payment_status' => $isPaidDirectly ? 'paid' : 'pending',
                 ]);
 
-                $total_buy_price  = $cart->product->buy_price * $cart->qty;
-                $total_sell_price = $cart->product->sell_price * $cart->qty;
-                $profits          = $total_sell_price - $total_buy_price;
+                foreach ($carts as $cart) {
+                    // Lock product row for update to prevent race conditions
+                    $product = Product::where('id', $cart->product_id)->lockForUpdate()->first();
 
-                $transaction->profits()->create([
-                    'transaction_id' => $transaction->id,
-                    'total'          => $profits,
-                ]);
+                    if (! $product) {
+                        throw new \Exception("Produk tidak ditemukan.");
+                    }
 
-                $product        = Product::find($cart->product_id);
-                $product->stock = $product->stock - $cart->qty;
-                $product->save();
-            }
+                    // Check stock
+                    if ($product->stock < $cart->qty) {
+                        throw new \Exception("Stok untuk mebel '{$product->title}' tidak mencukupi. Tersedia: {$product->stock}.");
+                    }
 
-            Cart::where('cashier_id', auth()->user()->id)->delete();
+                    $transaction->details()->create([
+                        'transaction_id' => $transaction->id,
+                        'product_id'     => $cart->product_id,
+                        'qty'            => $cart->qty,
+                        'price'          => $product->sell_price * $cart->qty,
+                    ]);
 
-            return $transaction->fresh(['customer']);
-        });
+                    $total_buy_price  = $product->buy_price * $cart->qty;
+                    $total_sell_price = $product->sell_price * $cart->qty;
+                    $profits          = $total_sell_price - $total_buy_price;
+
+                    $transaction->profits()->create([
+                        'transaction_id' => $transaction->id,
+                        'total'          => $profits,
+                    ]);
+                }
+
+                Cart::where('cashier_id', auth()->user()->id)->delete();
+
+                return $transaction->fresh(['customer']);
+            });
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('transactions.index')
+                ->withErrors(['checkout' => $e->getMessage()]);
+        }
 
         if ($paymentGateway === PaymentSetting::GATEWAY_WHATSAPP) {
             $whatsAppUrl = $this->buildWhatsAppOrderUrl($transaction);
@@ -637,5 +670,67 @@ class TransactionController extends Controller
         }
 
         return $normalized;
+    }
+
+    /**
+     * validateTransaction - Validate pending transaction and decrement stock
+     *
+     * @param int $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function validateTransaction($id)
+    {
+        $user = auth()->user();
+        if (! $user || ! $user->hasAnyRole(['super-admin', 'cashier'])) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $transaction = Transaction::find($id);
+        if (! $transaction) {
+            return redirect()->back()->withErrors(['checkout' => 'Transaksi tidak ditemukan.']);
+        }
+
+        if ($transaction->status !== 'pending') {
+            return redirect()->back()->withErrors(['checkout' => "Transaksi ini sudah divalidasi atau diproses (Status: {$transaction->status})."]);
+        }
+
+        try {
+            DB::transaction(function () use ($transaction) {
+                // Fetch transaction with row lock
+                $lockedTransaction = Transaction::where('id', $transaction->id)->lockForUpdate()->first();
+
+                // Check all details and their product stocks
+                foreach ($lockedTransaction->details as $detail) {
+                    $product = Product::where('id', $detail->product_id)->lockForUpdate()->first();
+
+                    if (! $product) {
+                        throw new \Exception("Produk tidak ditemukan.");
+                    }
+
+                    if ($product->stock < $detail->qty) {
+                        throw new \Exception("Validasi Gagal! Stok [{$product->title}] tidak mencukupi.");
+                    }
+                }
+
+                // Decrement stock
+                foreach ($lockedTransaction->details as $detail) {
+                    $product = Product::where('id', $detail->product_id)->lockForUpdate()->first();
+                    $product->decrement('stock', $detail->qty);
+                }
+
+                $lockedTransaction->update([
+                    'status' => 'success',
+                    'payment_status' => 'paid',
+                ]);
+            });
+
+            return redirect()->back()->with('success', 'Transaksi Berhasil Divalidasi & Stok Telah Dipotong!');
+
+        } catch (\Exception $e) {
+            // Update status to rejected
+            $transaction->update(['status' => 'rejected']);
+
+            return redirect()->back()->withErrors(['checkout' => $e->getMessage()]);
+        }
     }
 }

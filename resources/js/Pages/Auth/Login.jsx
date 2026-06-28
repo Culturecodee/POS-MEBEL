@@ -131,16 +131,6 @@ export default function Login({ status }) {
                                 "Masuk Sekarang"
                             )}
                         </button>
-
-                        <p className="text-center text-xs font-medium text-[#7b6453] sm:text-sm sm:text-[#6b5343]">
-                            Belum punya akun?{" "}
-                            <Link
-                                href="/register"
-                                className="font-semibold text-[#9a7356] hover:text-[#7a5c45] hover:underline"
-                            >
-                                Daftar
-                            </Link>
-                        </p>
                     </form>
                 </div>
             </div>

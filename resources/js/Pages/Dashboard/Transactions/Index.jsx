@@ -342,9 +342,9 @@ export default function Index({
                     setIsSubmitting(false);
                     toast.success("Transaksi berhasil!");
                 },
-                onError: () => {
+                onError: (errors) => {
                     setIsSubmitting(false);
-                    toast.error("Gagal menyimpan transaksi");
+                    toast.error(errors?.checkout || errors?.message || "Gagal menyimpan transaksi");
                 },
             }
         );
@@ -376,22 +376,20 @@ export default function Index({
                 <div className="lg:hidden flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                     <button
                         onClick={() => setMobileView("products")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
-                            mobileView === "products"
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${mobileView === "products"
                                 ? "text-[#7b563f] border-b-2 border-[#7b563f]"
                                 : "text-slate-500"
-                        }`}
+                            }`}
                     >
                         <IconShoppingCart size={18} />
                         <span>Produk</span>
                     </button>
                     <button
                         onClick={() => setMobileView("cart")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors relative ${
-                            mobileView === "cart"
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors relative ${mobileView === "cart"
                                 ? "text-[#7b563f] border-b-2 border-[#7b563f]"
                                 : "text-slate-500"
-                        }`}
+                            }`}
                     >
                         <IconReceipt size={18} />
                         <span>Keranjang</span>
@@ -405,11 +403,10 @@ export default function Index({
 
                 {/* Left Panel - Products */}
                 <div
-                    className={`flex-1 bg-slate-100 dark:bg-slate-950 overflow-hidden ${
-                        mobileView !== "products"
+                    className={`flex-1 bg-slate-100 dark:bg-slate-950 overflow-hidden ${mobileView !== "products"
                             ? "hidden lg:flex lg:flex-col"
                             : "flex flex-col"
-                    }`}
+                        }`}
                 >
                     <ProductGrid
                         products={allProducts}
@@ -422,14 +419,14 @@ export default function Index({
                         onAddToCart={handleAddToCart}
                         addingProductId={addingProductId}
                         searchInputRef={searchInputRef}
+                        carts={carts}
                     />
                 </div>
 
                 {/* Right Panel - Cart & Payment */}
                 <div
-                    className={`w-full lg:w-[420px] xl:w-[480px] flex flex-col bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 ${
-                        mobileView !== "cart" ? "hidden lg:flex" : "flex"
-                    }`}
+                    className={`w-full lg:w-[420px] xl:w-[480px] flex flex-col bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 ${mobileView !== "cart" ? "hidden lg:flex" : "flex"
+                        }`}
                     style={{ height: "calc(100vh - 4rem)" }}
                 >
                     {/* Customer Select - Fixed */}
@@ -590,11 +587,10 @@ export default function Index({
                                             onClick={() =>
                                                 setPaymentMethod(method.value)
                                             }
-                                            className={`p-3 rounded-xl border-2 transition-all flex items-center gap-2 ${
-                                                paymentMethod === method.value
+                                            className={`p-3 rounded-xl border-2 transition-all flex items-center gap-2 ${paymentMethod === method.value
                                                     ? "border-[#7b563f] bg-[#fbf4eb] dark:bg-[#5f3f2d]/30"
                                                     : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
-                                            }`}
+                                                }`}
                                         >
                                             <PaymentMethodLogo
                                                 method={method.value}
@@ -607,12 +603,11 @@ export default function Index({
                                             />
                                             <div className="text-left">
                                                 <p
-                                                    className={`text-sm font-semibold ${
-                                                        paymentMethod ===
+                                                    className={`text-sm font-semibold ${paymentMethod ===
                                                             method.value
                                                             ? "text-[#7b563f] dark:text-[#ead7bf]"
                                                             : "text-slate-700 dark:text-slate-300"
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {method.label}
                                                 </p>
@@ -696,13 +691,12 @@ export default function Index({
                                 (isDirectPayment && cash < payable) ||
                                 isSubmitting
                             }
-                            className={`w-full h-12 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
-                                carts.length &&
-                                selectedCustomer &&
-                                (!isDirectPayment || cash >= payable)
+                            className={`w-full h-12 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${carts.length &&
+                                    selectedCustomer &&
+                                    (!isDirectPayment || cash >= payable)
                                     ? "bg-gradient-to-r from-[#7b563f] to-[#5f3f2d] hover:from-[#694733] hover:to-[#553827] text-white shadow-lg shadow-[#7b563f]/30"
                                     : "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
-                            }`}
+                                }`}
                         >
                             {isSubmitting ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -713,12 +707,12 @@ export default function Index({
                                         {!carts.length
                                             ? "Keranjang Kosong"
                                             : !selectedCustomer
-                                            ? "Pilih Pelanggan"
-                                            : isDirectPayment && cash < payable
-                                            ? `Kurang ${formatPrice(
-                                                  payable - cash
-                                              )}`
-                                            : "Selesaikan Transaksi"}
+                                                ? "Pilih Pelanggan"
+                                                : isDirectPayment && cash < payable
+                                                    ? `Kurang ${formatPrice(
+                                                        payable - cash
+                                                    )}`
+                                                    : "Selesaikan Transaksi"}
                                     </span>
                                 </>
                             )}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
+import { Toaster, toast } from "react-hot-toast";
 import {
     IconArrowLeft,
     IconBrandWhatsapp,
@@ -15,7 +16,22 @@ import PaymentMethodLogo from "@/Components/POS/PaymentMethodLogo";
 import { paymentMethodLabels } from "@/Utils/paymentMethods";
 
 export default function Print({ transaction }) {
+    const { errors, flash } = usePage().props;
     const [printMode, setPrintMode] = useState("invoice"); // 'invoice' | 'thermal80' | 'thermal58'
+
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+        if (errors && Object.keys(errors).length > 0) {
+            Object.values(errors).forEach((err) => {
+                toast.error(err);
+            });
+        }
+    }, [flash, errors]);
 
     const formatPrice = (price = 0) =>
         Number(price || 0).toLocaleString("id-ID", {
@@ -87,6 +103,7 @@ export default function Print({ transaction }) {
     return (
         <>
             <Head title="Invoice Penjualan" />
+            <Toaster position="top-right" />
 
             <div className="min-h-screen bg-slate-100 dark:bg-slate-950 py-8 px-4 print:bg-white print:p-0">
                 <div className="max-w-4xl mx-auto space-y-6">
@@ -175,6 +192,54 @@ export default function Print({ transaction }) {
                             </button>
                         </div>
                     </div>
+
+                    {/* Status Alert Banners */}
+                    {transaction.status === "pending" && (
+                        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-250 dark:border-amber-900/50 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
+                            <div className="space-y-1">
+                                <h4 className="text-base font-bold text-amber-800 dark:text-amber-400">
+                                    Transaksi Ini Masih Pending (Menunggu Validasi)
+                                </h4>
+                                <p className="text-xs text-amber-700 dark:text-amber-500">
+                                    Silakan lakukan pengecekan kesesuaian barang, kuantitas, harga, dan fisik barang. Jika sudah sesuai, klik tombol di sebelah kanan untuk memotong stok secara resmi.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    if (confirm("Apakah Anda yakin ingin memvalidasi transaksi ini dan memotong stok barang secara resmi?")) {
+                                        router.post(route("transactions.validate", transaction.id), {}, {
+                                            preserveScroll: true,
+                                        });
+                                    }
+                                }}
+                                className="w-full md:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-colors whitespace-nowrap"
+                            >
+                                Selesaikan Transaksi
+                            </button>
+                        </div>
+                    )}
+
+                    {transaction.status === "success" && (
+                        <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-250 dark:border-emerald-900/50 rounded-2xl p-5 print:hidden">
+                            <h4 className="text-base font-bold text-emerald-800 dark:text-emerald-400">
+                                Transaksi Sukses & Valid
+                            </h4>
+                            <p className="text-xs text-emerald-700 dark:text-emerald-505 mt-1">
+                                Transaksi ini telah berhasil divalidasi dan stok mebel telah dipotong secara resmi di database.
+                            </p>
+                        </div>
+                    )}
+
+                    {transaction.status === "rejected" && (
+                        <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-250 dark:border-rose-900/50 rounded-2xl p-5 print:hidden">
+                            <h4 className="text-base font-bold text-rose-800 dark:text-rose-400">
+                                Transaksi Ditolak / Gagal Validasi
+                            </h4>
+                            <p className="text-xs text-rose-700 dark:text-rose-505 mt-1">
+                                Transaksi ini ditolak karena validasi stok gagal (sisa stok mebel di database lebih kecil dari kuantitas pesanan). Silakan buat transaksi baru.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Thermal Receipt Preview */}
                     {(printMode === "thermal80" ||
@@ -384,6 +449,24 @@ export default function Print({ transaction }) {
                                     Terima kasih telah berbelanja
                                 </p>
                             </div>
+
+                            {transaction.status === "pending" && (
+                                <div className="px-6 py-5 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex justify-center print:hidden">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (confirm("Apakah Anda yakin ingin memvalidasi transaksi ini dan memotong stok barang secara resmi?")) {
+                                                router.post(route("transactions.validate", transaction.id), {}, {
+                                                    preserveScroll: true,
+                                                });
+                                            }
+                                        }}
+                                        className="w-full max-w-md py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-colors text-center animate-pulse"
+                                    >
+                                        Selesaikan Transaksi (Validasi & Potong Stok)
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

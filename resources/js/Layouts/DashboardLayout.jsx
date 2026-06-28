@@ -1,16 +1,32 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "@/Components/Dashboard/Sidebar";
 import Navbar from "@/Components/Dashboard/Navbar";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import { useTheme } from "@/Context/ThemeSwitcherContext";
+import { usePage } from "@inertiajs/react";
 
 export default function AppLayout({ children }) {
     const { darkMode, themeSwitcher } = useTheme();
+    const { flash, errors } = usePage().props;
 
     const [sidebarOpen, setSidebarOpen] = useState(
         localStorage.getItem("sidebarOpen") === "true"
     );
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+        if (errors && Object.keys(errors).length > 0) {
+            Object.values(errors).forEach((err) => {
+                toast.error(err);
+            });
+        }
+    }, [flash, errors]);
 
     useEffect(() => {
         localStorage.setItem("sidebarOpen", sidebarOpen);

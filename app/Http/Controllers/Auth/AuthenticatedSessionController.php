@@ -31,20 +31,24 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
-        $request->session()->regenerate();
-
         $user = $request->user();
+
+        // Restrict login to super-admin and cashier roles
+        if ($user && ! $user->hasAnyRole(['super-admin', 'cashier'])) {
+            Auth::guard('web')->logout();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Akses ditolak. Halaman ini hanya untuk Admin dan Kasir.',
+            ]);
+        }
+
+        $request->session()->regenerate();
 
         if ($user?->isSuperAdmin()) {
             return redirect()->intended(route('dashboard', absolute: false));
-        }
-
-        if ($user?->isCustomer() && $user->hasPermissionTo('products-access')) {
-            return redirect()->intended(route('products.index', absolute: false));
-        }
-
-        if ($user?->hasPermissionTo('products-access')) {
-            return redirect()->intended(route('products.index', absolute: false));
         }
 
         if ($user?->hasPermissionTo('transactions-access')) {

@@ -40,9 +40,14 @@ Route::get('/', function () {
         return redirect()->route('dashboard');
     }
 
+    $categories = \App\Models\Category::select('id', 'name', 'image')->get();
+    $products = \App\Models\Product::with('category')->latest()->take(12)->get();
+
     return Inertia::render('Welcome', [
         'canLogin'       => Route::has('login'),
-        'canRegister'    => Route::has('register'),
+        'canRegister'    => false,
+        'categories'     => $categories,
+        'products'       => $products,
         'laravelVersion' => Application::VERSION,
         'phpVersion'     => PHP_VERSION,
     ]);
@@ -116,6 +121,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::post('/transactions/store', [TransactionController::class, 'store'])->middleware('permission:transactions-access')->name('transactions.store');
     Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->middleware('permission:transactions-access')->name('transactions.print');
     Route::get('/transactions/history', [TransactionController::class, 'history'])->middleware('permission:transactions-access')->name('transactions.history');
+    Route::post('/transactions/{id}/validate', [TransactionController::class, 'validateTransaction'])->middleware('permission:transactions-access')->name('transactions.validate');
 
     Route::get('/settings/payments', [PaymentSettingController::class, 'edit'])->middleware('permission:payment-settings-access')->name('settings.payments.edit');
     Route::put('/settings/payments', [PaymentSettingController::class, 'update'])->middleware('permission:payment-settings-access')->name('settings.payments.update');

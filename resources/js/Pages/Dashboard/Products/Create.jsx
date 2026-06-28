@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, useForm, usePage, Link } from "@inertiajs/react";
 import Button from "@/Components/Dashboard/Button";
@@ -13,7 +13,17 @@ import {
     IconPhoto,
     IconCurrencyDollar,
     IconCirclePlus,
+    IconCalculator,
 } from "@tabler/icons-react";
+
+const toNumber = (value) => Number.parseInt(value || 0, 10) || 0;
+
+const formatCurrency = (value = 0) =>
+    new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0,
+    }).format(value);
 
 export default function Create({ categories }) {
     const { errors } = usePage().props;
@@ -25,6 +35,13 @@ export default function Create({ categories }) {
         title: "",
         category_id: "",
         description: "",
+        raw_material_price: "",
+        upholstery_price: "",
+        cushion_price: "",
+        seat_pillow_price: "",
+        glass_price: "",
+        finishing_price: "",
+        packing_price: "",
         buy_price: "",
         sell_price: "",
         stock: "",
@@ -68,6 +85,21 @@ export default function Create({ categories }) {
         const numericValue = e.target.value.replace(/[^\d]/g, "");
         setData(field, numericValue);
     };
+
+    const totalHpp =
+        toNumber(data.raw_material_price) +
+        toNumber(data.upholstery_price) +
+        toNumber(data.cushion_price) +
+        toNumber(data.seat_pillow_price) +
+        toNumber(data.glass_price) +
+        toNumber(data.finishing_price) +
+        toNumber(data.packing_price);
+
+    useEffect(() => {
+        if (totalHpp > 0) {
+            setData("buy_price", totalHpp.toString());
+        }
+    }, [totalHpp]);
 
     const submit = (e) => {
         e.preventDefault();
@@ -237,28 +269,124 @@ export default function Create({ categories }) {
                         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
                             <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
                                 <IconCurrencyDollar size={18} />
-                                Harga & Stok
+                                Komponen Biaya Produk / HPP
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                 <Input
                                     type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    label="Harga Mentahan"
+                                    value={data.raw_material_price}
+                                    onChange={handlePriceChange("raw_material_price")}
+                                    errors={errors.raw_material_price}
+                                    placeholder="0"
+                                />
+                                <Input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    label="Harga Jok"
+                                    value={data.upholstery_price}
+                                    onChange={handlePriceChange("upholstery_price")}
+                                    errors={errors.upholstery_price}
+                                    placeholder="0"
+                                />
+                                <Input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    label="Harga Bantal Peluk"
+                                    value={data.cushion_price}
+                                    onChange={handlePriceChange("cushion_price")}
+                                    errors={errors.cushion_price}
+                                    placeholder="0"
+                                />
+                                <Input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    label="Harga Bantal Dudukan"
+                                    value={data.seat_pillow_price}
+                                    onChange={handlePriceChange("seat_pillow_price")}
+                                    errors={errors.seat_pillow_price}
+                                    placeholder="0"
+                                />
+                                <Input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    label="Harga Kaca"
+                                    value={data.glass_price}
+                                    onChange={handlePriceChange("glass_price")}
+                                    errors={errors.glass_price}
+                                    placeholder="0"
+                                />
+                                <Input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    label="Harga Cat/Finishing"
+                                    value={data.finishing_price}
+                                    onChange={handlePriceChange("finishing_price")}
+                                    errors={errors.finishing_price}
+                                    placeholder="0"
+                                />
+                                <Input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    label="Harga Packing"
+                                    value={data.packing_price}
+                                    onChange={handlePriceChange("packing_price")}
+                                    errors={errors.packing_price}
+                                    placeholder="0"
+                                />
+                                <Input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
                                     label="Harga Beli"
                                     value={data.buy_price}
                                     onChange={handlePriceChange("buy_price")}
                                     errors={errors.buy_price}
                                     placeholder="0"
+                                    disabled={totalHpp > 0}
+                                    className={totalHpp > 0 ? "opacity-60 bg-[#f1e7dd] dark:bg-slate-900 cursor-not-allowed" : ""}
                                 />
                                 <Input
                                     type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
                                     label="Harga Jual"
                                     value={data.sell_price}
                                     onChange={handlePriceChange("sell_price")}
                                     errors={errors.sell_price}
                                     placeholder="0"
                                 />
+                            </div>
+
+                            <div className="mt-4 rounded-2xl border border-[#ead9c7] bg-[#fff8ef] p-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="rounded-xl bg-[#f1e0cf] p-2 text-[#8a5a3c]">
+                                        <IconCalculator size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-[#5b4031]">
+                                            Total HPP Otomatis
+                                        </p>
+                                        <p className="text-lg font-bold text-[#8a5a3c]">
+                                            {formatCurrency(totalHpp)}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <Input
                                     type="number"
                                     label="Stok"
+                                    min="0"
                                     value={data.stock}
                                     onChange={(e) =>
                                         setData("stock", e.target.value)

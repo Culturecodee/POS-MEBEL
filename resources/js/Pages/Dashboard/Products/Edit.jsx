@@ -37,14 +37,14 @@ export default function Edit({ categories, product, returnPage = 1 }) {
         title: product.title,
         category_id: product.category_id,
         description: product.description,
-        raw_material_price: product.raw_material_price ?? product.buy_price ?? "",
+        raw_material_price: product.raw_material_price ?? "",
         upholstery_price: product.upholstery_price ?? "",
         cushion_price: product.cushion_price ?? "",
         seat_pillow_price: product.seat_pillow_price ?? "",
         glass_price: product.glass_price ?? "",
         finishing_price: product.finishing_price ?? "",
         packing_price: product.packing_price ?? "",
-        buy_price: product.buy_price,
+        buy_price: product.buy_price || "",
         sell_price: product.sell_price,
         stock: product.stock,
         page: returnPage,
@@ -130,6 +130,12 @@ export default function Edit({ categories, product, returnPage = 1 }) {
         toNumber(data.glass_price) +
         toNumber(data.finishing_price) +
         toNumber(data.packing_price);
+
+    useEffect(() => {
+        if (totalHpp > 0) {
+            setData("buy_price", totalHpp.toString());
+        }
+    }, [totalHpp]);
 
     const submit = (e) => {
         e.preventDefault();
@@ -409,6 +415,18 @@ export default function Edit({ categories, product, returnPage = 1 }) {
                                     type="text"
                                     inputMode="numeric"
                                     pattern="[0-9]*"
+                                    label="Harga Beli"
+                                    value={data.buy_price}
+                                    onChange={handlePriceChange("buy_price")}
+                                    errors={errors.buy_price}
+                                    placeholder="0"
+                                    disabled={totalHpp > 0}
+                                    className={totalHpp > 0 ? "opacity-60 bg-[#f1e7dd] dark:bg-slate-900 cursor-not-allowed" : ""}
+                                />
+                                <Input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
                                     label="Harga Jual"
                                     value={data.sell_price}
                                     onChange={handlePriceChange("sell_price")}
@@ -437,6 +455,7 @@ export default function Edit({ categories, product, returnPage = 1 }) {
                                 <Input
                                     type="number"
                                     label="Stok Produk"
+                                    min="0"
                                     value={data.stock}
                                     onChange={(e) =>
                                         setData("stock", e.target.value)
