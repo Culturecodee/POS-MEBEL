@@ -16,8 +16,9 @@ import {
     IconX,
 } from "@tabler/icons-react";
 import { getProductImageUrl } from "@/Utils/imageUrl";
+import { rupiahInputDisplay, parseRawNumber } from "@/Utils/formatRupiah";
 
-const toNumber = (value) => Number.parseInt(value || 0, 10) || 0;
+const toNumber = (value) => parseRawNumber(value);
 
 const formatCurrency = (value = 0) =>
     new Intl.NumberFormat("id-ID", {
@@ -118,8 +119,10 @@ export default function Edit({ categories, product, returnPage = 1 }) {
     };
 
     const handlePriceChange = (field) => (e) => {
-        const numericValue = e.target.value.replace(/[^\d]/g, "");
-        setData(field, numericValue);
+        // Hapus semua non-angka, lalu hapus awalan 0
+        const digits = e.target.value.replace(/[^\d]/g, "");
+        const noLeadingZero = digits.replace(/^0+(\d)/, "$1");
+        setData(field, noLeadingZero);
     };
 
     const totalHpp =
@@ -344,9 +347,8 @@ export default function Edit({ categories, product, returnPage = 1 }) {
                                 <Input
                                     type="text"
                                     inputMode="numeric"
-                                    pattern="[0-9]*"
                                     label="Harga Mentahan"
-                                    value={data.raw_material_price}
+                                    value={rupiahInputDisplay(data.raw_material_price)}
                                     onChange={handlePriceChange("raw_material_price")}
                                     errors={errors.raw_material_price}
                                     placeholder="0"
@@ -354,9 +356,8 @@ export default function Edit({ categories, product, returnPage = 1 }) {
                                 <Input
                                     type="text"
                                     inputMode="numeric"
-                                    pattern="[0-9]*"
                                     label="Harga Jok"
-                                    value={data.upholstery_price}
+                                    value={rupiahInputDisplay(data.upholstery_price)}
                                     onChange={handlePriceChange("upholstery_price")}
                                     errors={errors.upholstery_price}
                                     placeholder="0"
@@ -364,9 +365,8 @@ export default function Edit({ categories, product, returnPage = 1 }) {
                                 <Input
                                     type="text"
                                     inputMode="numeric"
-                                    pattern="[0-9]*"
                                     label="Harga Bantal Peluk"
-                                    value={data.cushion_price}
+                                    value={rupiahInputDisplay(data.cushion_price)}
                                     onChange={handlePriceChange("cushion_price")}
                                     errors={errors.cushion_price}
                                     placeholder="0"
@@ -374,9 +374,8 @@ export default function Edit({ categories, product, returnPage = 1 }) {
                                 <Input
                                     type="text"
                                     inputMode="numeric"
-                                    pattern="[0-9]*"
                                     label="Harga Bantal Dudukan"
-                                    value={data.seat_pillow_price}
+                                    value={rupiahInputDisplay(data.seat_pillow_price)}
                                     onChange={handlePriceChange("seat_pillow_price")}
                                     errors={errors.seat_pillow_price}
                                     placeholder="0"
@@ -384,9 +383,8 @@ export default function Edit({ categories, product, returnPage = 1 }) {
                                 <Input
                                     type="text"
                                     inputMode="numeric"
-                                    pattern="[0-9]*"
                                     label="Harga Kaca"
-                                    value={data.glass_price}
+                                    value={rupiahInputDisplay(data.glass_price)}
                                     onChange={handlePriceChange("glass_price")}
                                     errors={errors.glass_price}
                                     placeholder="0"
@@ -394,9 +392,8 @@ export default function Edit({ categories, product, returnPage = 1 }) {
                                 <Input
                                     type="text"
                                     inputMode="numeric"
-                                    pattern="[0-9]*"
                                     label="Harga Cat/Finishing"
-                                    value={data.finishing_price}
+                                    value={rupiahInputDisplay(data.finishing_price)}
                                     onChange={handlePriceChange("finishing_price")}
                                     errors={errors.finishing_price}
                                     placeholder="0"
@@ -404,9 +401,8 @@ export default function Edit({ categories, product, returnPage = 1 }) {
                                 <Input
                                     type="text"
                                     inputMode="numeric"
-                                    pattern="[0-9]*"
                                     label="Harga Packing"
-                                    value={data.packing_price}
+                                    value={rupiahInputDisplay(data.packing_price)}
                                     onChange={handlePriceChange("packing_price")}
                                     errors={errors.packing_price}
                                     placeholder="0"
@@ -414,9 +410,8 @@ export default function Edit({ categories, product, returnPage = 1 }) {
                                 <Input
                                     type="text"
                                     inputMode="numeric"
-                                    pattern="[0-9]*"
                                     label="Harga Beli"
-                                    value={data.buy_price}
+                                    value={rupiahInputDisplay(data.buy_price)}
                                     onChange={handlePriceChange("buy_price")}
                                     errors={errors.buy_price}
                                     placeholder="0"
@@ -426,9 +421,8 @@ export default function Edit({ categories, product, returnPage = 1 }) {
                                 <Input
                                     type="text"
                                     inputMode="numeric"
-                                    pattern="[0-9]*"
                                     label="Harga Jual"
-                                    value={data.sell_price}
+                                    value={rupiahInputDisplay(data.sell_price)}
                                     onChange={handlePriceChange("sell_price")}
                                     errors={errors.sell_price}
                                     placeholder="0"

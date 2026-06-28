@@ -14,12 +14,14 @@ import CartPanel from "@/Components/POS/CartPanel";
 import PaymentMethodLogo from "@/Components/POS/PaymentMethodLogo";
 import CustomerSelect from "@/Components/POS/CustomerSelect";
 import NumpadModal from "@/Components/POS/NumpadModal";
+import ValidationModal from "@/Components/POS/ValidationModal";
 import HeldTransactions, {
     HoldButton,
 } from "@/Components/POS/HeldTransactions";
 import useBarcodeScanner from "@/Hooks/useBarcodeScanner";
 import { getProductImageUrl } from "@/Utils/imageUrl";
 import { manualPaymentOptions } from "@/Utils/paymentMethods";
+import { rupiahInputDisplay } from "@/Utils/formatRupiah";
 import {
     IconUser,
     IconShoppingCart,
@@ -28,6 +30,7 @@ import {
     IconBarcode,
     IconTrash,
     IconCash,
+    IconChecklist,
 } from "@tabler/icons-react";
 
 const formatPrice = (value = 0) =>
@@ -73,6 +76,7 @@ export default function Index({
     const [mobileView, setMobileView] = useState("products"); // 'products' | 'cart'
     const [numpadOpen, setNumpadOpen] = useState(false);
     const [showShortcuts, setShowShortcuts] = useState(false);
+    const [validationOpen, setValidationOpen] = useState(false);
 
     // Ref for search input to enable keyboard focus
     const searchInputRef = useRef(null);
@@ -620,7 +624,6 @@ export default function Index({
                                 </div>
                             </div>
 
-                            {/* Cash Input - Only for cash */}
                             {isDirectPayment && (
                                 <div>
                                     <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
@@ -633,19 +636,35 @@ export default function Index({
                                         <input
                                             type="text"
                                             inputMode="numeric"
-                                            value={cashInput}
-                                            onChange={(e) =>
-                                                setCashInput(
-                                                    e.target.value.replace(
-                                                        /[^\d]/g,
-                                                        ""
-                                                    )
-                                                )
-                                            }
+                                            value={rupiahInputDisplay(cashInput)}
+                                            onChange={(e) => {
+                                                const digits = e.target.value.replace(/[^\d]/g, "");
+                                                const noLeadingZero = digits.replace(/^0+(\d)/, "$1");
+                                                setCashInput(noLeadingZero);
+                                            }}
                                             placeholder="0"
-                                            className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-base font-semibold focus:ring-2 focus:ring-[#7b563f]/20 focus:border-[#7b563f]"
+                                            className={`w-full h-10 pl-10 pr-4 rounded-xl border bg-white dark:bg-slate-900 text-base font-semibold focus:ring-2 focus:ring-[#7b563f]/20 focus:border-[#7b563f] transition-colors ${
+                                                cashInput && cash < payable
+                                                    ? "border-red-400 dark:border-red-500"
+                                                    : "border-slate-200 dark:border-slate-700"
+                                            }`}
                                         />
                                     </div>
+                                    {/* Pesan error inline jika uang kurang */}
+                                    {cashInput && cash < payable && (
+                                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1">
+                                            <span>⚠</span>
+                                            Uang kurang{" "}
+                                            <span className="font-bold">
+                                                {(payable - cash).toLocaleString("id-ID", {
+                                                    style: "currency",
+                                                    currency: "IDR",
+                                                    minimumFractionDigits: 0,
+                                                })}
+                                            </span>{" "}
+                                            lagi
+                                        </p>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -682,41 +701,52 @@ export default function Index({
                                 </div>
                             )}
 
-                        {/* Submit Button - Always visible */}
-                        <button
-                            onClick={handleSubmitTransaction}
-                            disabled={
-                                !carts.length ||
-                                !selectedCustomer ||
-                                (isDirectPayment && cash < payable) ||
-                                isSubmitting
-                            }
-                            className={`w-full h-12 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${carts.length &&
-                                    selectedCustomer &&
-                                    (!isDirectPayment || cash >= payable)
-                                    ? "bg-gradient-to-r from-[#7b563f] to-[#5f3f2d] hover:from-[#694733] hover:to-[#553827] text-white shadow-lg shadow-[#7b563f]/30"
-                                    : "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
-                                }`}
-                        >
-                            {isSubmitting ? (
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : (
-                                <>
-                                    <IconReceipt size={18} />
-                                    <span>
-                                        {!carts.length
-                                            ? "Keranjang Kosong"
-                                            : !selectedCustomer
-                                                ? "Pilih Pelanggan"
-                                                : isDirectPayment && cash < payable
-                                                    ? `Kurang ${formatPrice(
-                                                        payable - cash
-                                                    )}`
-                                                    : "Selesaikan Transaksi"}
-                                    </span>
-                                </>
-                            )}
-                        </button>
+                        {/* Submit & Validation Buttons */}
+                        <div className="flex gap-2">
+                            {/* Tombol Validasi Blackbox */}
+                            <button
+                                onClick={() => setValidationOpen(true)}
+                                className="h-12 px-4 rounded-xl border-2 border-[#7b563f] text-[#7b563f] dark:text-[#ead7bf] dark:border-[#7b563f] hover:bg-[#fbf4eb] dark:hover:bg-[#5f3f2d]/30 text-sm font-semibold flex items-center gap-2 transition-all flex-shrink-0"
+                                title="Tampilkan visualisasi validasi sistem (Blackbox Testing)"
+                            >
+                                <IconChecklist size={18} />
+                                <span className="hidden sm:inline">Validasi</span>
+                            </button>
+
+                            {/* Tombol Selesaikan Transaksi */}
+                            <button
+                                onClick={handleSubmitTransaction}
+                                disabled={
+                                    !carts.length ||
+                                    !selectedCustomer ||
+                                    (isDirectPayment && cash < payable) ||
+                                    isSubmitting
+                                }
+                                className={`flex-1 h-12 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${carts.length &&
+                                        selectedCustomer &&
+                                        (!isDirectPayment || cash >= payable)
+                                        ? "bg-gradient-to-r from-[#7b563f] to-[#5f3f2d] hover:from-[#694733] hover:to-[#553827] text-white shadow-lg shadow-[#7b563f]/30"
+                                        : "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
+                                    }`}
+                            >
+                                {isSubmitting ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <>
+                                        <IconReceipt size={18} />
+                                        <span>
+                                            {!carts.length
+                                                ? "Keranjang Kosong"
+                                                : !selectedCustomer
+                                                    ? "Pilih Pelanggan"
+                                                    : isDirectPayment && cash < payable
+                                                        ? `Kurang ${(payable - cash).toLocaleString("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 })}`
+                                                        : "Selesaikan Transaksi"}
+                                        </span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -729,6 +759,19 @@ export default function Index({
                 title="Jumlah Bayar"
                 initialValue={Number(cashInput) || 0}
                 isCurrency={true}
+            />
+
+            {/* Validation Modal - Blackbox Testing */}
+            <ValidationModal
+                isOpen={validationOpen}
+                onClose={() => setValidationOpen(false)}
+                carts={carts}
+                subtotal={subtotal}
+                discount={discount}
+                payable={payable}
+                cash={cash}
+                isDirectPayment={isDirectPayment}
+                selectedCustomer={selectedCustomer}
             />
 
             {/* Keyboard Shortcuts Help */}
