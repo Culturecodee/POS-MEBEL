@@ -41,7 +41,23 @@ Route::get('/', function () {
     }
 
     $categories = \App\Models\Category::select('id', 'name', 'image')->get();
-    $products = \App\Models\Product::with('category')->latest()->take(12)->get();
+
+    $productsQuery = \App\Models\Product::with('category')->latest();
+
+    // Filter by category
+    if (request('category')) {
+        $productsQuery->where('category_id', request('category'));
+    }
+
+    // Filter by search
+    if (request('search')) {
+        $productsQuery->where(function ($q) {
+            $q->where('title', 'like', '%' . request('search') . '%')
+              ->orWhere('description', 'like', '%' . request('search') . '%');
+        });
+    }
+
+    $products = $productsQuery->paginate(12)->withQueryString();
 
     return Inertia::render('Welcome', [
         'canLogin'       => Route::has('login'),
@@ -50,6 +66,10 @@ Route::get('/', function () {
         'products'       => $products,
         'laravelVersion' => Application::VERSION,
         'phpVersion'     => PHP_VERSION,
+        'filters'        => [
+            'search'   => request('search', ''),
+            'category' => request('category', ''),
+        ],
     ]);
 });
 
