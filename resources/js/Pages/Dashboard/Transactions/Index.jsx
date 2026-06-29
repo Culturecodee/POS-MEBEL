@@ -37,7 +37,7 @@ const formatPrice = (value = 0) =>
     value.toLocaleString("id-ID", {
         style: "currency",
         currency: "IDR",
-        minimumFractionDigits: 0,
+        minimumFractionDigits: 2,
     });
 
 const directPaymentMethods = [
@@ -659,7 +659,7 @@ export default function Index({
                                                 {(payable - cash).toLocaleString("id-ID", {
                                                     style: "currency",
                                                     currency: "IDR",
-                                                    minimumFractionDigits: 0,
+                                                    minimumFractionDigits: 2,
                                                 })}
                                             </span>{" "}
                                             lagi
@@ -740,7 +740,7 @@ export default function Index({
                                                 : !selectedCustomer
                                                     ? "Pilih Pelanggan"
                                                     : isDirectPayment && cash < payable
-                                                        ? `Kurang ${(payable - cash).toLocaleString("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 })}`
+                                                        ? `Kurang ${(payable - cash).toLocaleString("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 2 })}`
                                                         : "Selesaikan Transaksi"}
                                         </span>
                                     </>

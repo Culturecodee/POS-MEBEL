@@ -28,14 +28,30 @@ export default function Button({
             cancelButtonText: "Batal",
         }).then((result) => {
             if (result.isConfirmed) {
-                destroy(url);
-
-                Swal.fire({
-                    title: "Berhasil!",
-                    text: "Data berhasil dihapus!",
-                    icon: "success",
-                    showConfirmButton: false,
-                    timer: 1500,
+                destroy(url, {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        Swal.fire({
+                            title: "Berhasil!",
+                            text: "Data berhasil dihapus!",
+                            icon: "success",
+                            showConfirmButton: false,
+                            timer: 1500,
+                        });
+                    },
+                    onError: (errors) => {
+                        const message =
+                            errors?.delete ||
+                            errors?.message ||
+                            "Gagal menghapus data. Pastikan data tidak sedang digunakan.";
+                        Swal.fire({
+                            title: "Gagal Menghapus!",
+                            text: message,
+                            icon: "error",
+                            confirmButtonColor: "#8a5a3c",
+                            confirmButtonText: "Tutup",
+                        });
+                    },
                 });
             }
         });

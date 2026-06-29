@@ -23,7 +23,7 @@ const formatCurrency = (value = 0) =>
     new Intl.NumberFormat("id-ID", {
         style: "currency",
         currency: "IDR",
-        minimumFractionDigits: 0,
+        minimumFractionDigits: 2,
     }).format(value);
 
 export default function Create({ categories }) {

@@ -1,32 +1,55 @@
-import { useState, useMemo } from "react";
-import { Head, Link } from "@inertiajs/react";
+import { useState, useEffect } from "react";
+import { Head, Link, router } from "@inertiajs/react";
 import {
     IconSearch,
     IconPackage,
     IconPhoto,
-    IconLogin,
+    IconChevronLeft,
+    IconChevronRight,
 } from "@tabler/icons-react";
 
 const formatCurrency = (value = 0) =>
     new Intl.NumberFormat("id-ID", {
         style: "currency",
         currency: "IDR",
-        minimumFractionDigits: 0,
+        minimumFractionDigits: 2,
     }).format(value);
 
-export default function Welcome({ categories = [], products = [] }) {
-    const [search, setSearch] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState(null);
+export default function Welcome({
+    categories = [],
+    products = {},
+    filters = {},
+}) {
+    const productList = products?.data ?? [];
+    const links       = products?.links ?? [];
+    const currentPage = products?.current_page ?? 1;
+    const lastPage    = products?.last_page ?? 1;
 
-    // Filtering products on client side
-    const filteredProducts = useMemo(() => {
-        return products.filter((product) => {
-            const matchesSearch = product.title.toLowerCase().includes(search.toLowerCase()) ||
-                (product.description && product.description.toLowerCase().includes(search.toLowerCase()));
-            const matchesCategory = selectedCategory ? product.category_id === selectedCategory : true;
-            return matchesSearch && matchesCategory;
-        });
-    }, [products, search, selectedCategory]);
+    // Local state — synced with URL via Inertia router
+    const [search, setSearch]           = useState(filters.search || "");
+    const [selectedCategory, setSelectedCategory] = useState(filters.category || "");
+
+    // Debounced search → hits server
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            router.get(
+                "/",
+                { search, category: selectedCategory },
+                { preserveState: true, preserveScroll: true, replace: true }
+            );
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [search]);
+
+    // Category filter → hits server immediately
+    const handleCategory = (categoryId) => {
+        setSelectedCategory(categoryId);
+        router.get(
+            "/",
+            { search, category: categoryId },
+            { preserveState: true, preserveScroll: true, replace: true }
+        );
+    };
 
     return (
         <>
@@ -36,7 +59,6 @@ export default function Welcome({ categories = [], products = [] }) {
                 {/* Header */}
                 <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#ebdccb]/60 transition-all duration-300">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-                        {/* Logo */}
                         <div className="flex items-center gap-3">
                             <img
                                 src="/images/aisyah-logo.jpg"
@@ -52,9 +74,6 @@ export default function Welcome({ categories = [], products = [] }) {
                                 </p>
                             </div>
                         </div>
-
-                        {/* Auth Buttons - Login Only */}
-                        
                     </div>
                 </header>
 
@@ -103,9 +122,9 @@ export default function Welcome({ categories = [], products = [] }) {
                         </h3>
                         <div className="flex flex-wrap justify-center gap-2">
                             <button
-                                onClick={() => setSelectedCategory(null)}
+                                onClick={() => handleCategory("")}
                                 className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition duration-200 ${
-                                    selectedCategory === null
+                                    selectedCategory === ""
                                         ? "bg-[#7b563f] text-white shadow-md shadow-[#7b563f]/20"
                                         : "bg-white text-[#7b563f] border border-[#ebdccb] hover:bg-[#fff9f2]"
                                 }`}
@@ -115,9 +134,9 @@ export default function Welcome({ categories = [], products = [] }) {
                             {categories.map((category) => (
                                 <button
                                     key={category.id}
-                                    onClick={() => setSelectedCategory(category.id)}
+                                    onClick={() => handleCategory(String(category.id))}
                                     className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition duration-200 ${
-                                        selectedCategory === category.id
+                                        selectedCategory === String(category.id)
                                             ? "bg-[#7b563f] text-white shadow-md shadow-[#7b563f]/20"
                                             : "bg-white text-[#7b563f] border border-[#ebdccb] hover:bg-[#fff9f2]"
                                     }`}
@@ -128,12 +147,14 @@ export default function Welcome({ categories = [], products = [] }) {
                         </div>
                     </div>
 
+
                     {/* Products Grid */}
-                    {filteredProducts.length > 0 ? (
+                    {productList.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {filteredProducts.map((product) => {
-                                const isLowStock = product.stock > 0 && product.stock <= 5;
-                                const isOutOfStock = product.stock === 0;
+                            {productList.map((product) => {
+                                const stock = Number(product.stock);
+                                const isLowStock   = stock > 0 && stock <= 5;
+                                const isOutOfStock = stock === 0;
 
                                 return (
                                     <div
@@ -158,10 +179,12 @@ export default function Welcome({ categories = [], products = [] }) {
                                                 </div>
                                             )}
 
+                                            {/* Category badge */}
                                             <div className="absolute left-3 top-3 rounded-lg bg-[#7b563f] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.1em] text-white">
                                                 {product.category?.name || "Mebel"}
                                             </div>
 
+                                            {/* Stock badge */}
                                             <div className="absolute right-3 top-3">
                                                 {isOutOfStock ? (
                                                     <span className="rounded-full bg-red-500 px-2.5 py-1 text-[9px] font-bold text-white uppercase tracking-wider">
@@ -179,7 +202,7 @@ export default function Welcome({ categories = [], products = [] }) {
                                             </div>
                                         </div>
 
-                                        {/* Info Area - Passive details only */}
+                                        {/* Info Area */}
                                         <div className="flex-1 p-5 flex flex-col justify-between">
                                             <div className="space-y-2">
                                                 <h4 className="text-base font-bold text-[#473022]">
@@ -204,8 +227,8 @@ export default function Welcome({ categories = [], products = [] }) {
                                                         <span className="text-[9px] uppercase tracking-[0.1em] font-semibold text-slate-400 block">
                                                             Jumlah Stok
                                                         </span>
-                                                        <span className="text-xs font-bold text-slate-700">
-                                                            {product.stock} unit
+                                                        <span className={`text-xs font-bold ${isOutOfStock ? "text-red-500" : "text-slate-700"}`}>
+                                                            {stock} unit
                                                         </span>
                                                     </div>
                                                 </div>
@@ -224,6 +247,56 @@ export default function Welcome({ categories = [], products = [] }) {
                             <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
                                 Coba ubah kata kunci pencarian Anda atau pilih kategori koleksi yang lain.
                             </p>
+                        </div>
+                    )}
+
+                    {/* ── Pagination ── */}
+                    {lastPage > 1 && (
+                        <div className="mt-12 flex items-center justify-center gap-2 flex-wrap">
+                            {/* Prev */}
+                            <button
+                                disabled={currentPage === 1}
+                                onClick={() =>
+                                    router.get("/", { search, category: selectedCategory, page: currentPage - 1 }, { preserveState: true, preserveScroll: true, replace: true })
+                                }
+                                className="flex items-center gap-1 px-3 py-2 rounded-xl border border-[#ebdccb] bg-white text-sm font-semibold text-[#7b563f] hover:bg-[#fff9f2] disabled:opacity-40 disabled:cursor-not-allowed transition"
+                            >
+                                <IconChevronLeft size={16} />
+                                Prev
+                            </button>
+
+                            {/* Page numbers */}
+                            {links
+                                .filter((link) => !link.label.includes("Previous") && !link.label.includes("Next"))
+                                .map((link, idx) => (
+                                    <button
+                                        key={idx}
+                                        disabled={link.active}
+                                        onClick={() => {
+                                            const url = new URL(link.url);
+                                            const page = url.searchParams.get("page");
+                                            router.get("/", { search, category: selectedCategory, page }, { preserveState: true, preserveScroll: true, replace: true });
+                                        }}
+                                        className={`w-9 h-9 rounded-xl text-sm font-bold transition ${
+                                            link.active
+                                                ? "bg-[#7b563f] text-white shadow-md"
+                                                : "border border-[#ebdccb] bg-white text-[#7b563f] hover:bg-[#fff9f2]"
+                                        } ${!link.url ? "opacity-40 cursor-not-allowed" : ""}`}
+                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                    />
+                                ))}
+
+                            {/* Next */}
+                            <button
+                                disabled={currentPage === lastPage}
+                                onClick={() =>
+                                    router.get("/", { search, category: selectedCategory, page: currentPage + 1 }, { preserveState: true, preserveScroll: true, replace: true })
+                                }
+                                className="flex items-center gap-1 px-3 py-2 rounded-xl border border-[#ebdccb] bg-white text-sm font-semibold text-[#7b563f] hover:bg-[#fff9f2] disabled:opacity-40 disabled:cursor-not-allowed transition"
+                            >
+                                Next
+                                <IconChevronRight size={16} />
+                            </button>
                         </div>
                     )}
                 </main>

@@ -19,65 +19,67 @@ import Pagination from "@/Components/Dashboard/Pagination";
 // Category Card for Grid View
 function CategoryCard({ category, canEdit, canDelete }) {
     return (
-        <Link
-            href={route("categories.show", category.id)}
-            className="group block bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200"
-        >
-            {/* Category Image */}
-            <div className="relative aspect-[3/2] bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                {category.image ? (
-                    <img
-                        src={category.image}
-                        alt={category.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <IconCategory
-                            size={48}
-                            className="text-slate-300 dark:text-slate-600"
-                            strokeWidth={1}
+        <div className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200">
+            {/* Clickable image area → navigate to detail */}
+            <Link
+                href={route("categories.show", category.id)}
+                className="block"
+            >
+                {/* Category Image */}
+                <div className="relative aspect-[3/2] bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    {category.image ? (
+                        <img
+                            src={category.image}
+                            alt={category.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
                         />
-                    </div>
-                )}
-
-                {(canEdit || canDelete) && (
-                    <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                        {canEdit && (
-                            <Link
-                                href={route("categories.edit", category.id)}
-                                className="p-2.5 rounded-xl bg-white text-[#9a6b45] hover:bg-[#f5ebdf] shadow-lg transition-colors"
-                            >
-                                <IconPencilCog size={18} />
-                            </Link>
-                        )}
-                        {canDelete && (
-                            <Button
-                                type={"delete"}
-                                icon={<IconTrash size={18} />}
-                                className={
-                                    "p-2.5 rounded-xl bg-white text-[#8f4f39] hover:bg-[#f3e1d7] shadow-lg"
-                                }
-                                url={route("categories.destroy", category.id)}
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <IconCategory
+                                size={48}
+                                className="text-slate-300 dark:text-slate-600"
+                                strokeWidth={1}
                             />
-                        )}
-                    </div>
-                )}
-            </div>
+                        </div>
+                    )}
+                </div>
 
-            {/* Category Info */}
-            <div className="p-4">
-                <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                    {category.name}
-                </h3>
-                {category.description && (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
-                        {category.description}
-                    </p>
-                )}
-            </div>
-        </Link>
+                {/* Category Info */}
+                <div className="p-4">
+                    <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                        {category.name}
+                    </h3>
+                    {category.description && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
+                            {category.description}
+                        </p>
+                    )}
+                </div>
+            </Link>
+
+            {/* Action buttons — outside Link so they don't trigger navigation */}
+            {(canEdit || canDelete) && (
+                <div className="flex items-center gap-2 px-4 pb-4">
+                    {canEdit && (
+                        <Link
+                            href={route("categories.edit", category.id)}
+                            className="p-2 rounded-xl bg-[#f5ebdf] text-[#9a6b45] hover:bg-[#ead9c7] transition-colors"
+                        >
+                            <IconPencilCog size={16} />
+                        </Link>
+                    )}
+                    {canDelete && (
+                        <Button
+                            type={"delete"}
+                            icon={<IconTrash size={16} />}
+                            className={"p-2 rounded-xl bg-[#f3e1d7] text-[#8f4f39] hover:bg-[#e7cfbf]"}
+                            url={route("categories.destroy", category.id)}
+                        />
+                    )}
+                </div>
+            )}
+        </div>
     );
 }
 

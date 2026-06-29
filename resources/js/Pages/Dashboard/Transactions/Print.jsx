@@ -42,7 +42,7 @@ export default function Print({ transaction }) {
         Number(price || 0).toLocaleString("id-ID", {
             style: "currency",
             currency: "IDR",
-            minimumFractionDigits: 0,
+            minimumFractionDigits: 2,
         });
 
     const formatDateTime = (value) =>
