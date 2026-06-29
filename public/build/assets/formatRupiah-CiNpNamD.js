@@ -1,0 +1,1 @@
+const e=n=>{if(n==null||n==="")return 0;const r=String(n).replace(/[^\d]/g,"");return r?parseInt(r,10):0},t=n=>{if(!n&&n!==0)return"";const r=parseInt(String(n).replace(/[^\d]/g,""),10);return isNaN(r)?"":r.toLocaleString("id-ID")};export{e as p,t as r};
