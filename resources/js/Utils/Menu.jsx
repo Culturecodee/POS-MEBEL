@@ -14,6 +14,7 @@ import {
     IconFolder,
     IconHome,
     IconInfoCircle,
+    IconPackage,
     IconPhone,
     IconSchool,
     IconShoppingCart,
@@ -149,6 +150,13 @@ export default function Menu() {
                     permissions:
                         hasAnyPermission(["reports-access"]) && auth?.super,
                 },
+                {
+                    title: "Prioritas Restock",
+                    href: route("restock.index"),
+                    active: url.startsWith("/dashboard/restock"),
+                    icon: <IconPackage size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["reports-access"]),
+                },
             ],
         },
         {
@@ -157,14 +165,14 @@ export default function Menu() {
                 {
                     title: "Hak Akses",
                     href: route("permissions.index"),
-                    active: url === "/dashboard/permissions" ? true : false, // Update comparison here
+                    active: url === "/dashboard/permissions" ? true : false,
                     icon: <IconUserBolt size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["permissions-access"]),
                 },
                 {
                     title: "Akses Group",
                     href: route("roles.index"),
-                    active: url === "/dashboard/roles" ? true : false, // Update comparison here
+                    active: url === "/dashboard/roles" ? true : false,
                     icon: <IconUserShield size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["roles-access"]),
                 },

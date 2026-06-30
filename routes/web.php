@@ -4,6 +4,7 @@ use App\Http\Controllers\Apps\CategoryController;
 use App\Http\Controllers\Apps\CustomerController;
 use App\Http\Controllers\Apps\PaymentSettingController;
 use App\Http\Controllers\Apps\ProductController;
+use App\Http\Controllers\Apps\RestockController;
 use App\Http\Controllers\Apps\TransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PermissionController;
@@ -150,6 +151,11 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::get('/reports/sales', [SalesReportController::class, 'index'])->middleware('permission:reports-access')->name('reports.sales.index');
     Route::get('/reports/profits', [ProfitReportController::class, 'index'])->middleware('permission:profits-access')->name('reports.profits.index');
     Route::get('/reports/inventory', [InventoryReportController::class, 'index'])->middleware('permission:reports-access')->name('reports.inventory.index');
+
+    // restock TOPSIS
+    Route::get('/restock', [RestockController::class, 'index'])->middleware('permission:reports-access')->name('restock.index');
+    Route::post('/restock/validate', [RestockController::class, 'validateData'])->middleware('permission:reports-access')->name('restock.validate');
+    Route::post('/restock/calculate', [RestockController::class, 'calculate'])->middleware('permission:reports-access')->name('restock.calculate');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
