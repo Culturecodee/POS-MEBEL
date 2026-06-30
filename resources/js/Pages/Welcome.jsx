@@ -150,7 +150,7 @@ export default function Welcome({
 
                     {/* Products Grid */}
                     {productList.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {productList.map((product) => {
                                 const stock = Number(product.stock);
                                 const isLowStock   = stock > 0 && stock <= 5;
