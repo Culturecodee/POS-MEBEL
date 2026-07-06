@@ -151,7 +151,7 @@ export default function Menu() {
                         hasAnyPermission(["reports-access"]) && auth?.super,
                 },
                 {
-                    title: "Prioritas Restock",
+                    title: "Produk Terlaris",
                     href: route("restock.index"),
                     active: url.startsWith("/dashboard/restock"),
                     icon: <IconPackage size={20} strokeWidth={1.5} />,
