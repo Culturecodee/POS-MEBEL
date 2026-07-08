@@ -551,6 +551,16 @@ function MethodValidationTabs({ activeTab, setActiveTab, rawDetails, results, da
                                     Total kuantitas produk dikalikan dengan harga satuan produk (IDR).
                                 </p>
                             </div>
+                            {/* 5 */}
+                            <div className="p-4 border border-slate-200 dark:border-slate-805 rounded-2xl bg-slate-50/80 dark:bg-slate-950/20 flex flex-col justify-between md:col-span-2">
+                                <h4 className="font-bold text-xs text-[#7b563f] dark:text-slate-300 uppercase mb-2 font-sans">5. Score Validasi &amp; Penyebab Kurang dari 100%</h4>
+                                <div className="p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-805 text-center text-sm font-bold text-[#7b563f] dark:text-[#ead7bf] mb-2 font-mono">
+                                    Score_Validasi = (Total_Qty(Pj) / Max_Qty) x 100%
+                                </div>
+                                <p className="text-[10px] text-slate-500 leading-normal font-sans">
+                                    <strong>Penyebab skor kurang dari 100%:</strong> Skor ini mengukur popularitas produk relatif terhadap produk terlaris (#1 yang bernilai 100%). Jika suatu produk mendapatkan skor di bawah 100%, itu disebabkan karena kuantitas pemesanan produk tersebut lebih rendah (jarang dipesan orang) dibandingkan produk terlaris utama pada periode terpilih.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -602,15 +612,32 @@ function MethodValidationTabs({ activeTab, setActiveTab, rawDetails, results, da
                                     const sumText = g.items.map(item => item.qty).join(" + ");
                                     return (
                                         <div key={i} className="p-3 border border-slate-100 dark:border-slate-850 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 flex flex-col md:flex-row md:items-center justify-between gap-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-5 h-5 rounded-full bg-[#7b563f]/10 dark:bg-[#7b563f]/20 text-[#7b563f] dark:text-[#ead7bf] flex items-center justify-center font-bold font-mono">#{i + 1}</span>
-                                                <span className="font-bold text-slate-700 dark:text-slate-200 font-sans">{g.name}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 font-mono bg-white dark:bg-slate-950 px-3 py-1 border border-slate-100 dark:border-slate-850 rounded-lg">
-                                                <span className="text-slate-400">Total = {sumText}</span>
-                                                <span className="text-slate-350">=</span>
-                                                <span className="font-bold text-[#7b563f] dark:text-[#ead7bf]">{g.total} unit</span>
-                                            </div>
+                                            {(() => {
+                                                const prodResult = (results || []).find(r => r.product_name === g.name);
+                                                const vScore = prodResult ? prodResult.validation_score : 0;
+                                                return (
+                                                    <div className="flex flex-col md:flex-row md:items-center gap-2 flex-1 justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="w-5 h-5 rounded-full bg-[#7b563f]/10 dark:bg-[#7b563f]/20 text-[#7b563f] dark:text-[#ead7bf] flex items-center justify-center font-bold font-mono">#{i + 1}</span>
+                                                            <span className="font-bold text-slate-700 dark:text-slate-200 font-sans">{g.name}</span>
+                                                            {vScore < 100 ? (
+                                                                <span className="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-955/20 text-amber-600 dark:text-amber-400 text-[10px] font-bold border border-amber-100 dark:border-amber-900/20">
+                                                                    Skor: {vScore}% (Jarang Dipesan)
+                                                                </span>
+                                                            ) : (
+                                                                <span className="px-2 py-0.5 rounded bg-green-50 dark:bg-green-955/20 text-green-600 dark:text-green-400 text-[10px] font-bold border border-green-100 dark:border-green-900/20">
+                                                                    Skor: {vScore}% (Terpopuler #1)
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-2 font-mono bg-white dark:bg-slate-950 px-3 py-1 border border-slate-100 dark:border-slate-850 rounded-lg">
+                                                            <span className="text-slate-400">Total = {sumText}</span>
+                                                            <span className="text-slate-350">=</span>
+                                                            <span className="font-bold text-[#7b563f] dark:text-[#ead7bf]">{g.total} unit</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     );
                                 })}
