@@ -146,9 +146,15 @@ class BestProductController extends Controller
             return $b['total_qty'] <=> $a['total_qty'];
         });
 
-        // re-assign ranks
+        // re-assign ranks & calculate validation_score
+        $maxQty = count($results) > 0 ? max(array_column($results, 'total_qty')) : 1;
+        if ($maxQty <= 0) {
+            $maxQty = 1;
+        }
+
         foreach ($results as $index => &$result) {
             $result['rank'] = $index + 1;
+            $result['validation_score'] = round(($result['total_qty'] / $maxQty) * 100, 2);
         }
         unset($result);
 

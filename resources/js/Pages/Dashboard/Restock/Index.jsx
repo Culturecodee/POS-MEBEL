@@ -318,6 +318,7 @@ export default function RestockIndex() {
                                                 <th className="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nama Produk</th>
                                                 <th className="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Kategori</th>
                                                 <th className="px-4 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Total Terjual</th>
+                                                <th className="px-4 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Score Validasi</th>
                                                 <th className="px-4 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Kekerapan (Trx)</th>
                                                 <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Total Pendapatan</th>
                                                 <th className="px-4 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Stok Saat Ini</th>
@@ -359,6 +360,11 @@ export default function RestockIndex() {
                                                                     />
                                                                 </div>
                                                             </div>
+                                                        </td>
+                                                        <td className="px-4 py-3.5 text-center">
+                                                            <span className={`font-semibold ${r.validation_score === 100 ? "text-green-600 font-bold" : "text-amber-600"}`}>
+                                                                {r.validation_score}%
+                                                            </span>
                                                         </td>
                                                         <td className="px-4 py-3.5 text-center text-slate-600 dark:text-slate-400">
                                                             {r.total_trx} kali
