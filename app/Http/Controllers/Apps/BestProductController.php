@@ -95,8 +95,26 @@ class BestProductController extends Controller
         $productIds = $salesData->pluck('product_id')->toArray();
         $products   = Product::whereIn('id', $productIds)->get()->keyBy('id');
 
+        // Ambil data detail transaksi mentah untuk keperluan Uji Validasi (Tabulasi)
+        $rawDetails = TransactionDetail::with(['transaction:id,invoice,created_at', 'product:id,title'])
+            ->whereHas('transaction', function ($q) use ($dateFrom, $dateTo) {
+                $q->whereIn('status', self::VALID_STATUSES)
+                  ->whereBetween('created_at', [$dateFrom, $dateTo]);
+            })
+            ->where('qty', '>', 0)
+            ->get()
+            ->map(function($detail) {
+                return [
+                    'invoice'      => $detail->transaction?->invoice ?? '-',
+                    'date'         => $detail->transaction?->created_at ? \Carbon\Carbon::parse($detail->transaction->created_at)->format('Y-m-d H:i') : '-',
+                    'product_name' => $detail->product?->title ?? '-',
+                    'qty'          => (int) $detail->qty,
+                    'price'        => (float) $detail->price,
+                ];
+            });
+
         $results = [];
-        foreach ($salesData as $rank => $sale) {
+        foreach ($salesData as $sale) {
             $product = $products->get($sale->product_id);
             if (! $product) continue;
 
@@ -106,7 +124,7 @@ class BestProductController extends Controller
             $avgPerDay = $totalDays > 0 ? round($qty / $totalDays, 2) : 0;
 
             $results[] = [
-                'rank'         => $rank + 1,
+                'rank'         => 0, // Set after sorting
                 'product_id'   => $sale->product_id,
                 'product_name' => $product->title,
                 'category'     => $product->category?->name ?? '-',
@@ -120,11 +138,26 @@ class BestProductController extends Controller
             ];
         }
 
+        // Sort by total_qty descending, then by product_name ascending
+        usort($results, function ($a, $b) {
+            if ($b['total_qty'] === $a['total_qty']) {
+                return strcmp($a['product_name'], $b['product_name']);
+            }
+            return $b['total_qty'] <=> $a['total_qty'];
+        });
+
+        // re-assign ranks
+        foreach ($results as $index => &$result) {
+            $result['rank'] = $index + 1;
+        }
+        unset($result);
+
         return response()->json([
-            'results'    => $results,
-            'total_days' => $totalDays,
-            'date_from'  => $request->date_from,
-            'date_to'    => $request->date_to,
+            'results'     => $results,
+            'raw_details' => $rawDetails,
+            'total_days'  => $totalDays,
+            'date_from'   => $request->date_from,
+            'date_to'     => $request->date_to,
         ]);
     }
 }
